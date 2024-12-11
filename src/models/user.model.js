@@ -12,6 +12,6 @@ export const removeUser = (socketId) => {
   }
 };
 
-export const getUser = () => {
+export const getUsers = () => {
   return users;
 };

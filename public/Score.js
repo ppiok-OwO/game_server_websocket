@@ -3,27 +3,23 @@ import { socket } from './Socket.js';
 
 let userId = null;
 
-// 서버로부터 uuid 받기
-const getUserId = () => {
-  return new Promise((resolve, reject) => {
-    if (userId) {
-      resolve(userId);
-    } else {
-      socket.on('connection', (data) => {
-        if (data && data.uuid) {
-          userId = data.uuid;
-          resolve(userId);
-        } else {
-          reject(new Error('Failed to retrieve userId from server.'));
-        }
-      });
-    }
-  });
-};
+// 서버에서 UUID를 받을 수 있도록 설정
+socket.on('connection', (data) => {
+  if (data && data.uuid) {
+    userId = data.uuid;
+    console.log('User ID received:', userId);
+  } else {
+    console.error('Failed to retrieve userId from server.');
+  }
+});
 
 // 웹소켓을 통해 스테이지 데이터를 가져오는 함수
-const fetchStages = async (userId) => {
+const fetchStages = async () => {
   return new Promise((resolve, reject) => {
+    if (!userId) {
+      reject(new Error('User ID is not available.'));
+      return;
+    }
     socket.emit('getStages', { userId }, (response) => {
       if (response.status === 'success') {
         resolve(response.data);
@@ -33,6 +29,8 @@ const fetchStages = async (userId) => {
     });
   });
 };
+
+// =======================
 
 class Score {
   score = 0;
@@ -48,10 +46,10 @@ class Score {
   update = async (deltaTime) => {
     this.score += deltaTime * 0.001;
 
-    const userId = await getUserId();
     let currentStages;
     try {
-      currentStages = await fetchStages(userId);
+      currentStages = await fetchStages();
+      console.log('Fetched stages:', currentStages);
     } catch (error) {
       console.error(error.message);
       return;
@@ -65,6 +63,9 @@ class Score {
     currentStages.sort((a, b) => b.id - a.id);
     const currentStage = currentStages[0];
     const targetStage = currentStages[1] || { id: currentStage.id + 1 };
+
+    console.log('Current stage:', currentStage);
+    console.log('Target stage:', targetStage);
 
     if (Math.floor(this.score) % 10 === 0 && this.stageChange) {
       this.stageChange = false;

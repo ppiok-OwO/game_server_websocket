@@ -13,11 +13,11 @@ const registerHandler = (io) => {
     // 새 유저의 게임 정보 초기화
     handleConnection(socket, userUUID);
 
-    // 유저가 경험하는 이벤트는 핸들러 맵핑을 통해 처리
+    // 모든 서비스 이벤트 처리
     socket.on('event', (data) => handlerEvent(io, socket, data));
 
-    // 접속을 해제하는 경우, socket.id를 통해 users 배열에서 삭제
-    socket.on('disconnect', (socket) => handleDisconnect(socket, userUUID));
+    // 접속 해제시 이벤트 처리
+    socket.on('disconnect', () => handleDisconnect(socket, userUUID));
   });
 };
 

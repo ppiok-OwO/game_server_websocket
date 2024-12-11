@@ -15,6 +15,9 @@ export const moveStageHandler = (userId, payload) => {
   currentStages.sort((a, b) => b.id - a.id);
   const currentStage = currentStages[0];
 
+  console.log('Current stage on server:', currentStage);
+  console.log('Payload currentStage:', payload.currentStage);
+
   // 클라이언트 vs 서버 비교
   if (currentStage.id !== payload.currentStage) {
     console.log('Server currentStage:', currentStage);
@@ -40,5 +43,6 @@ export const moveStageHandler = (userId, payload) => {
   }
 
   setStage(userId, payload.targetStage, serverTime);
+  console.log('Stage successfully updated to:', payload.targetStage);
   return { status: 'success' };
 };
