@@ -9,26 +9,11 @@ socket.on('connection', (data) => {
     userId = data.uuid;
     console.log('User ID received:', userId);
   } else {
-    console.error('Failed to retrieve userId from server.');
+    console.error('Failed to load userId from server.');
   }
 });
 
 // 웹소켓을 통해 스테이지 데이터를 가져오는 함수
-const fetchStages = async () => {
-  return new Promise((resolve, reject) => {
-    if (!userId) {
-      reject(new Error('User ID is not available.'));
-      return;
-    }
-    socket.emit('getStages', { userId }, (response) => {
-      if (response.status === 'success') {
-        resolve(response.data);
-      } else {
-        reject(new Error(response.message || 'Failed to fetch stages'));
-      }
-    });
-  });
-};
 
 // =======================
 
@@ -48,7 +33,7 @@ class Score {
 
     let currentStages;
     try {
-      currentStages = await fetchStages();
+      currentStages = sendEvent(4, { uuid: userId });
       console.log('Fetched stages:', currentStages);
     } catch (error) {
       console.error(error.message);
@@ -64,8 +49,8 @@ class Score {
     const currentStage = currentStages[0];
     const targetStage = currentStages[1] || { id: currentStage.id + 1 };
 
-    console.log('Current stage:', currentStage);
-    console.log('Target stage:', targetStage);
+    // console.log('Current stage:', currentStage);
+    // console.log('Target stage:', targetStage);
 
     if (Math.floor(this.score) % 10 === 0 && this.stageChange) {
       this.stageChange = false;
@@ -75,9 +60,9 @@ class Score {
       });
 
       // 스테이지 이동 후 1초가 지나면 플래그 초기화
-      setTimeout(() => {
-        this.stageChange = true;
-      }, 1000);
+      // setTimeout(() => {
+      //   this.stageChange = true;
+      // }, 8000);
     }
   };
 

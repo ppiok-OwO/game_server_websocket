@@ -8,8 +8,8 @@ export const createStage = (uuid) => {
   stages[uuid] = [];
 };
 
-export const getStage = (uuid) => {
-  return stages[uuid];
+export const getStage = (uuid, payload) => {
+  return stages[uuid] || stages[payload.userId];
 };
 
 export const setStage = (uuid, id, timestamp) => {
