@@ -13,8 +13,6 @@ socket.on('connection', (data) => {
   }
 });
 
-// 웹소켓을 통해 스테이지 데이터를 가져오는 함수
-
 // =======================
 
 class Score {
@@ -31,38 +29,17 @@ class Score {
   update = async (deltaTime) => {
     this.score += deltaTime * 0.001;
 
-    let currentStages;
-    try {
-      currentStages = sendEvent(4, { uuid: userId });
-      console.log('Fetched stages:', currentStages);
-    } catch (error) {
-      console.error(error.message);
-      return;
-    }
+    let currentStageId = Math.floor(this.score / 10) + 1000;
+    console.log(currentStageId);
 
-    if (!currentStages || !currentStages.length) {
-      console.error('No stages found for user');
-      return { status: 'fail', message: 'No stages found for user' };
-    }
-
-    currentStages.sort((a, b) => b.id - a.id);
-    const currentStage = currentStages[0];
-    const targetStage = currentStages[1] || { id: currentStage.id + 1 };
-
-    // console.log('Current stage:', currentStage);
-    // console.log('Target stage:', targetStage);
-
-    if (Math.floor(this.score) % 10 === 0 && this.stageChange) {
-      this.stageChange = false;
-      sendEvent(11, {
-        currentStage: currentStage.id,
-        targetStage: targetStage.id,
-      });
-
-      // 스테이지 이동 후 1초가 지나면 플래그 초기화
-      // setTimeout(() => {
-      //   this.stageChange = true;
-      // }, 8000);
+    for (let i = 1; i < 6; i++) {
+      if (Math.floor(this.score) === 10 * i && this.stageChange) {
+        this.stageChange = false;
+        await sendEvent(11, {
+          currentStage: currentStageId,
+          targetStage: currentStageId + 1,
+        });
+      }
     }
   };
 

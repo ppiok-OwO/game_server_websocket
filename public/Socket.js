@@ -21,12 +21,24 @@ socket.on('connection', (data) => {
   userId = data.uuid;
 });
 
-const sendEvent = (handlerId, payload) => {
-  socket.emit('event', {
-    userId,
-    clientVersion: CLIENT_VERSION,
-    handlerId,
-    payload,
+const sendEvent = async (handlerId, payload) => {
+  return new Promise((resolve, reject) => {
+    socket.emit(
+      'event',
+      {
+        userId,
+        clientVersion: CLIENT_VERSION,
+        handlerId,
+        payload,
+      },
+      (error, response) => {
+        if (error) {
+          reject(error); // 에러 발생 시 Promise를 거부
+        } else {
+          resolve(response); // 성공 시 응답 반환
+        }
+      },
+    );
   });
 };
 

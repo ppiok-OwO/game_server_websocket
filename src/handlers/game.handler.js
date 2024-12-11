@@ -6,6 +6,7 @@ export const gameStart = (uuid, payload) => {
 
   // 게임을 새로 시작할 때 세션 배열 초기화
   clearStage(uuid);
+  console.log(`After clearStage: `, getStage(uuid));
 
   // stages 배열에서 0번째 = 첫 번째 스테이지
   setStage(uuid, stages.data[0].id, payload.timestamp);
