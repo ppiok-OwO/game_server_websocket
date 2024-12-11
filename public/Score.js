@@ -1,4 +1,38 @@
 import { sendEvent } from './Socket.js';
+import { socket } from './Socket.js';
+
+let userId = null;
+
+// 서버로부터 uuid 받기
+const getUserId = () => {
+  return new Promise((resolve, reject) => {
+    if (userId) {
+      resolve(userId);
+    } else {
+      socket.on('connection', (data) => {
+        if (data && data.uuid) {
+          userId = data.uuid;
+          resolve(userId);
+        } else {
+          reject(new Error('Failed to retrieve userId from server.'));
+        }
+      });
+    }
+  });
+};
+
+// 웹소켓을 통해 스테이지 데이터를 가져오는 함수
+const fetchStages = async (userId) => {
+  return new Promise((resolve, reject) => {
+    socket.emit('getStages', { userId }, (response) => {
+      if (response.status === 'success') {
+        resolve(response.data);
+      } else {
+        reject(new Error(response.message || 'Failed to fetch stages'));
+      }
+    });
+  });
+};
 
 class Score {
   score = 0;
@@ -11,14 +45,40 @@ class Score {
     this.scaleRatio = scaleRatio;
   }
 
-  update(deltaTime) {
+  update = async (deltaTime) => {
     this.score += deltaTime * 0.001;
-    // 점수가 100점 이상이 될 시 서버에 메세지 전송
-    if (Math.floor(this.score) === 10 && this.stageChange) {
-      this.stageChange = false;
-      sendEvent(11, { currentStage: 1000, targetStage: 1001 });
+
+    const userId = await getUserId();
+    let currentStages;
+    try {
+      currentStages = await fetchStages(userId);
+    } catch (error) {
+      console.error(error.message);
+      return;
     }
-  }
+
+    if (!currentStages || !currentStages.length) {
+      console.error('No stages found for user');
+      return { status: 'fail', message: 'No stages found for user' };
+    }
+
+    currentStages.sort((a, b) => b.id - a.id);
+    const currentStage = currentStages[0];
+    const targetStage = currentStages[1] || { id: currentStage.id + 1 };
+
+    if (Math.floor(this.score) % 10 === 0 && this.stageChange) {
+      this.stageChange = false;
+      sendEvent(11, {
+        currentStage: currentStage.id,
+        targetStage: targetStage.id,
+      });
+
+      // 스테이지 이동 후 1초가 지나면 플래그 초기화
+      setTimeout(() => {
+        this.stageChange = true;
+      }, 1000);
+    }
+  };
 
   getItem(itemId) {
     this.score += 0;
