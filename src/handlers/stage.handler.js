@@ -13,11 +13,10 @@ export const moveStageHandler = (userId, payload) => {
 
   // 오름차순 -> 가장 큰 스테이지 ID를 확인 <- 유저의 현재 스테이지
   currentStages.sort((a, b) => b.id - a.id);
-  const currentStage = currentStages[0].id;
+  const currentStage = currentStages[0];
 
   // 클라이언트 vs 서버 비교
   if (currentStage.id !== payload.currentStage) {
-    console.log('Mismatch detected!');
     console.log('Server currentStage:', currentStage);
     console.log('Client currentStage:', payload.currentStage);
     return { status: 'fail', message: 'Current stage mismatch' };
@@ -29,7 +28,8 @@ export const moveStageHandler = (userId, payload) => {
 
   // 1스테이지->2스테이지로 넘어가는 과정
   // 임의로 정한 오차범위(0.5)를 넘었을 경우 fail
-  if (elapsedTime < 10 || elapsedTime > 10.5) {
+  if (elapsedTime < 9.5 || elapsedTime > 10.5) {
+    console.log('Server elapsedTime:', elapsedTime);
     return { status: 'fail', message: 'Invalid elapsed time' };
   }
 
