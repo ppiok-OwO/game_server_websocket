@@ -5,10 +5,16 @@ import Score from './Score.js';
 import ItemController from './ItemController.js';
 import './Socket.js';
 import { sendEvent } from './Socket.js';
+import { socket } from './Socket.js';
 
+// 게임 캔버스
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
+// 게임 시작 버튼
+const gameStartButton = document.getElementById('gameStart');
+
+// 게임 스피드
 const GAME_SPEED_START = 1;
 const GAME_SPEED_INCREMENT = 0.00001;
 
@@ -76,6 +82,17 @@ let gameSpeed = GAME_SPEED_START;
 let gameover = false;
 let hasAddedEventListenersForRestart = false;
 let waitingToStart = true;
+let userId = null;
+
+// 서버에서 UUID를 받을 수 있도록 설정
+socket.on('connection', (data) => {
+  if (data && data.uuid) {
+    userId = data.uuid;
+    console.log('User ID received:', userId);
+  } else {
+    console.error('Failed to load userId from server.');
+  }
+});
 
 function createSprites() {
   // 비율에 맞는 크기
@@ -208,7 +225,7 @@ function reset() {
   score.reset();
   gameSpeed = GAME_SPEED_START;
   // 게임시작 핸들러ID 2, payload 에는 게임 시작 시간
-  sendEvent(2, { timestamp: Date.now() });
+  sendEvent(2, { id: userId, timestamp: Date.now() });
 }
 
 function setupGameReset() {
@@ -216,7 +233,7 @@ function setupGameReset() {
     hasAddedEventListenersForRestart = true;
 
     setTimeout(() => {
-      window.addEventListener('keyup', reset, { once: true });
+      gameStartButton.addEventListener('click', reset, { once: true });
     }, 1000);
   }
 }
@@ -286,4 +303,5 @@ function gameLoop(currentTime) {
 // 게임 프레임을 다시 그리는 메서드
 requestAnimationFrame(gameLoop);
 
-window.addEventListener('keyup', reset, { once: true });
+// 게임 시작
+gameStartButton.addEventListener('click', reset, { once: true });

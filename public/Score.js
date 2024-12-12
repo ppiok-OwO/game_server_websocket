@@ -18,7 +18,8 @@ socket.on('connection', (data) => {
 class Score {
   score = 0;
   HIGH_SCORE_KEY = 'highScore';
-  stageChange = true;
+  // stageChange = true;
+  lastStageId = null; // 마지막으로 알림을 보낸 스테이지 ID
 
   constructor(ctx, scaleRatio) {
     this.ctx = ctx;
@@ -28,18 +29,20 @@ class Score {
 
   update = async (deltaTime) => {
     this.score += deltaTime * 0.001;
-
     let currentStageId = Math.floor(this.score / 10) + 1000;
-    console.log(currentStageId);
 
-    for (let i = 1; i < 6; i++) {
-      if (Math.floor(this.score) === 10 * i && this.stageChange) {
-        this.stageChange = false;
-        await sendEvent(11, {
-          currentStage: currentStageId,
-          targetStage: currentStageId + 1,
-        });
-      }
+    if (
+      Math.floor(this.score) % 10 === 0 && // 스코어가 10의 배수일 때
+      this.lastStageId !== currentStageId && // 마지막으로 알림을 보낸 스테이지와 다를 때
+      Math.floor(this.score) >= 10
+      // && this.stageChange
+    ) {
+      // this.stageChange = false;
+      this.lastStageId = currentStageId; // 현재 스테이지 ID로 업데이트
+      await sendEvent(11, {
+        currentStage: currentStageId - 1,
+        targetStage: currentStageId,
+      });
     }
   };
 
@@ -49,6 +52,7 @@ class Score {
 
   reset() {
     this.score = 0;
+    this.lastStageId = null; // 리셋 시 마지막 스테이지 ID 초기화
   }
 
   setHighScore() {

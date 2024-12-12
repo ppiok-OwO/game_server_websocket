@@ -2,21 +2,19 @@ import express from 'express';
 import { createServer } from 'http';
 import initSocket from './init/socket.js';
 import { loadGameAssets } from './init/asset.js';
+import path from 'path';
 
 const app = express();
 const server = createServer(app);
 
 const PORT = 3000;
+// 정적 파일 경로 설정
+const __dirname = path.resolve(); // 현재 디렉토리 경로
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 initSocket(server);
-
-app.get('/', (req, res) => {
-  // 테스트를 위한 API 생성
-  res.send('<h1>Hello World</h1>');
-});
 
 server.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`);
