@@ -17,6 +17,7 @@ socket.on('connection', (data) => {
 
 class Score {
   score = 0;
+  time = 0;
   HIGH_SCORE_KEY = 'highScore';
   // stageChange = true;
   lastStageId = null; // 마지막으로 알림을 보낸 스테이지 ID
@@ -28,13 +29,13 @@ class Score {
   }
 
   update = async (deltaTime) => {
-    this.score += deltaTime * 0.001;
-    let currentStageId = Math.floor(this.score / 10) + 1000;
+    this.time += deltaTime * 0.001;
+    let currentStageId = Math.floor(this.time / 10) + 1000;
 
     if (
-      Math.floor(this.score) % 10 === 0 && // 스코어가 10의 배수일 때
+      Math.floor(this.time) % 10 === 0 && // 스코어가 10의 배수일 때
       this.lastStageId !== currentStageId && // 마지막으로 알림을 보낸 스테이지와 다를 때
-      Math.floor(this.score) >= 10
+      Math.floor(this.time) >= 10
       // && this.stageChange
     ) {
       // this.stageChange = false;
@@ -45,6 +46,17 @@ class Score {
       });
     }
   };
+
+  getIngredient(ingredientId) {
+    for (let i = 1; i <= 5; i++) {
+      if (ingredientId % 6 === i) {
+        this.score += 10 * i;
+      }
+    }
+    if (ingredientId % 6 === 0) {
+      this.score += 10 * 6;
+    }
+  }
 
   getItem(itemId) {
     this.score += 0;
@@ -71,17 +83,21 @@ class Score {
     const y = 20 * this.scaleRatio;
 
     const fontSize = 20 * this.scaleRatio;
-    this.ctx.font = `${fontSize}px serif`;
+    this.ctx.font = `${fontSize}px monospace`;
     this.ctx.fillStyle = '#525250';
 
-    const scoreX = this.canvas.width - 75 * this.scaleRatio;
-    const highScoreX = scoreX - 125 * this.scaleRatio;
+    const scoreX = this.canvas.width - 155 * this.scaleRatio;
+    const highScoreX = scoreX - 165 * this.scaleRatio;
 
     const scorePadded = Math.floor(this.score).toString().padStart(6, 0);
     const highScorePadded = highScore.toString().padStart(6, 0);
 
-    this.ctx.fillText(scorePadded, scoreX, y);
-    this.ctx.fillText(`HI ${highScorePadded}`, highScoreX, y);
+    const timePadded = Math.floor(this.time).toString().padStart(4, 0);
+    const tiemX = 20 * this.scaleRatio;
+
+    this.ctx.fillText(` SCORE ${scorePadded}`, scoreX, y);
+    this.ctx.fillText(`HISCORE ${highScorePadded} |`, highScoreX, y);
+    this.ctx.fillText(`TIME ${timePadded}`, tiemX, y);
   }
 }
 

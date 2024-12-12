@@ -1,11 +1,12 @@
 import Player from './Player.js';
 import Ground from './Ground.js';
-import CactiController from './CactiController.js';
+import ObstacleCotroller from './ObstacleController.js';
 import Score from './Score.js';
 import ItemController from './ItemController.js';
 import './Socket.js';
 import { sendEvent } from './Socket.js';
 import { socket } from './Socket.js';
+import IngredientController from './IngredientController.js';
 
 // 게임 캔버스
 const canvas = document.getElementById('game');
@@ -20,7 +21,7 @@ const GAME_SPEED_INCREMENT = 0.00001;
 
 // 게임 크기
 const GAME_WIDTH = 800;
-const GAME_HEIGHT = 200;
+const GAME_HEIGHT = 300;
 
 // 플레이어
 // 800 * 200 사이즈의 캔버스에서는 이미지의 기본크기가 크기때문에 1.5로 나눈 값을 사용. (비율 유지)
@@ -35,10 +36,13 @@ const GROUND_HEIGHT = 24;
 const GROUND_SPEED = 0.5;
 
 // 선인장
-const CACTI_CONFIG = [
-  { width: 48 / 1.5, height: 100 / 1.5, image: 'images/cactus_1.png' },
-  { width: 98 / 1.5, height: 100 / 1.5, image: 'images/cactus_2.png' },
-  { width: 68 / 1.5, height: 70 / 1.5, image: 'images/cactus_3.png' },
+const OBSTACLE_CONFIG = [
+  {
+    width: 100 / 1.5,
+    height: 100 / 1.5,
+    image: 'images/obstacle/fitnesstrainer.png',
+  },
+  { width: 98 / 1.5, height: 100 / 1.5, image: 'images/obstacle/stop.png' },
 ];
 
 // 아이템
@@ -69,10 +73,50 @@ const ITEM_CONFIG = [
   },
 ];
 
+const INGREDIENT_CONFIG = [
+  {
+    width: 65 / 1.5,
+    height: 65 / 1.5,
+    id: 1,
+    image: 'images/ingredients/tteok.png',
+  },
+  {
+    width: 65 / 1.5,
+    height: 65 / 1.5,
+    id: 2,
+    image: 'images/ingredients/gochujang.png',
+  },
+  {
+    width: 65 / 1.5,
+    height: 65 / 1.5,
+    id: 3,
+    image: 'images/ingredients/ramyeon.png',
+  },
+  {
+    width: 65 / 1.5,
+    height: 65 / 1.5,
+    id: 4,
+    image: 'images/ingredients/cheese.png',
+  },
+  {
+    width: 65 / 1.5,
+    height: 65 / 1.5,
+    id: 5,
+    image: 'images/ingredients/sundae.png',
+  },
+  {
+    width: 65 / 1.5,
+    height: 65 / 1.5,
+    id: 6,
+    image: 'images/ingredients/friedrice.png',
+  },
+];
+
 // 게임 요소들
 let player = null;
 let ground = null;
-let cactiController = null;
+let obstacleCotroller = null;
+let ingredientController = null;
 let itemController = null;
 let score = null;
 
@@ -82,15 +126,15 @@ let gameSpeed = GAME_SPEED_START;
 let gameover = false;
 let hasAddedEventListenersForRestart = false;
 let waitingToStart = true;
-let userId = null;
+let uuid = null;
 
 // 서버에서 UUID를 받을 수 있도록 설정
 socket.on('connection', (data) => {
   if (data && data.uuid) {
-    userId = data.uuid;
-    console.log('User ID received:', userId);
+    uuid = data.uuid;
+    console.log('User ID received:', uuid);
   } else {
-    console.error('Failed to load userId from server.');
+    console.error('Failed to load uuid from server.');
   }
 });
 
@@ -123,19 +167,37 @@ function createSprites() {
     scaleRatio,
   );
 
-  const cactiImages = CACTI_CONFIG.map((cactus) => {
+  const obstacleImages = OBSTACLE_CONFIG.map((obstacle) => {
     const image = new Image();
-    image.src = cactus.image;
+    image.src = obstacle.image;
     return {
       image,
-      width: cactus.width * scaleRatio,
-      height: cactus.height * scaleRatio,
+      width: obstacle.width * scaleRatio,
+      height: obstacle.height * scaleRatio,
     };
   });
 
-  cactiController = new CactiController(
+  obstacleCotroller = new ObstacleCotroller(
     ctx,
-    cactiImages,
+    obstacleImages,
+    scaleRatio,
+    GROUND_SPEED,
+  );
+
+  const ingredientImages = INGREDIENT_CONFIG.map((ingredient) => {
+    const image = new Image();
+    image.src = ingredient.image;
+    return {
+      image,
+      id: ingredient.id,
+      width: ingredient.width * scaleRatio,
+      height: ingredient.height * scaleRatio,
+    };
+  });
+
+  ingredientController = new IngredientController(
+    ctx,
+    ingredientImages,
     scaleRatio,
     GROUND_SPEED,
   );
@@ -208,7 +270,7 @@ function showStartGameText() {
   ctx.fillStyle = 'grey';
   const x = canvas.width / 14;
   const y = canvas.height / 2;
-  ctx.fillText('Tap Screen or Press Space To Start', x, y);
+  ctx.fillText('Press the Game Start Button', x, y);
 }
 
 function updateGameSpeed(deltaTime) {
@@ -221,11 +283,11 @@ function reset() {
   waitingToStart = false;
 
   ground.reset();
-  cactiController.reset();
+  obstacleCotroller.reset();
   score.reset();
   gameSpeed = GAME_SPEED_START;
   // 게임시작 핸들러ID 2, payload 에는 게임 시작 시간
-  sendEvent(2, { id: userId, timestamp: Date.now() });
+  sendEvent(2, { id: uuid, timestamp: Date.now() });
 }
 
 function setupGameReset() {
@@ -262,8 +324,9 @@ function gameLoop(currentTime) {
     // 땅이 움직임
     ground.update(gameSpeed, deltaTime);
     // 선인장
-    cactiController.update(gameSpeed, deltaTime);
+    obstacleCotroller.update(gameSpeed, deltaTime);
     itemController.update(gameSpeed, deltaTime);
+    ingredientController.update(gameSpeed, deltaTime);
     // 달리기
     player.update(gameSpeed, deltaTime);
     updateGameSpeed(deltaTime);
@@ -271,7 +334,7 @@ function gameLoop(currentTime) {
     score.update(deltaTime);
   }
 
-  if (!gameover && cactiController.collideWith(player)) {
+  if (!gameover && obstacleCotroller.collideWith(player)) {
     gameover = true;
     score.setHighScore();
     setupGameReset();
@@ -280,13 +343,18 @@ function gameLoop(currentTime) {
   if (collideWithItem && collideWithItem.itemId) {
     score.getItem(collideWithItem.itemId);
   }
+  const collideWithIngredient = ingredientController.collideWith(player);
+  if (collideWithIngredient && collideWithIngredient.ingredientId) {
+    score.getIngredient(collideWithIngredient.ingredientId);
+  }
 
   // draw
   player.draw();
-  cactiController.draw();
+  obstacleCotroller.draw();
   ground.draw();
   score.draw();
   itemController.draw();
+  ingredientController.draw();
 
   if (gameover) {
     showGameOver();

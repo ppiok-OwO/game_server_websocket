@@ -4,9 +4,9 @@
 import { getGameAssets } from '../init/asset.js';
 import { getStage, setStage } from '../models/stage.model.js';
 
-export const moveStageHandler = async (userId, payload) => {
+export const moveStageHandler = async (uuid, payload) => {
   // 유저의 현재 스테이지 정보
-  let currentStages = getStage(userId);
+  let currentStages = getStage(uuid);
   if (!currentStages.length) {
     console.log('No stages found for user');
     return { status: 'fail', message: 'No stages found for user' };
@@ -20,7 +20,7 @@ export const moveStageHandler = async (userId, payload) => {
   const currentStage = currentStages[0];
 
   // 클라이언트 vs 서버 비교
-  if (currentStage.id !== payload.currentStage && currentStage.id !== 1001) {
+  if (currentStage.id !== payload.currentStage) {
     console.log('Server currentStage:', currentStage.id);
     console.log('Client currentStage:', payload.currentStage);
     return { status: 'fail', message: 'Current stage mismatch' };
@@ -32,10 +32,10 @@ export const moveStageHandler = async (userId, payload) => {
   console.log('Elapsed time:', elapsedTime);
 
   // 임의로 정한 오차범위(±0.5)를 넘었을 경우 fail
-  if (elapsedTime < 9.5 || elapsedTime > 10.5) {
-    console.log('Server elapsedTime:', elapsedTime);
-    return { status: 'fail', message: 'Invalid elapsed time' };
-  }
+  // if (elapsedTime < 9.5 || elapsedTime > 10.5) {
+  //   console.log('Server elapsedTime:', elapsedTime);
+  //   return { status: 'fail', message: 'Invalid elapsed time' };
+  // }
 
   // targetStage에 대한 검증 <- 게임 에셋에 존재하는 스테이지인가?
   const { stages } = getGameAssets();
@@ -43,7 +43,32 @@ export const moveStageHandler = async (userId, payload) => {
     return { status: 'fail', message: 'Target stage not found' };
   }
 
-  await setStage(userId, payload.targetStage, serverTime);
+  await setStage(uuid, payload.targetStage, serverTime);
   console.log('Stage successfully updated to:', payload.targetStage);
   return { status: 'success' };
+};
+
+export const getStageScore = async (payload) => {
+  try {
+    // 게임 에셋 가져오기
+    const { stages } = getGameAssets();
+
+    // 해당 stageId에 해당하는 데이터 찾기
+    const stage = stages.data.find((stage) => stage.id === payload.stageId);
+
+    // 스테이지가 존재하지 않으면 에러 반환
+    if (!stage) {
+      return { status: 'fail', message: 'Stage not found' };
+    }
+
+    console.log('stage scroe : ', stage.score);
+
+    return { status: 'success', score: stage.score };
+  } catch (err) {
+    // 에러 처리
+    return {
+      status: 'error',
+      message: 'An error occurred while retrieving the stage score.',
+    };
+  }
 };

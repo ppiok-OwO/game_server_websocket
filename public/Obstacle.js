@@ -1,4 +1,4 @@
-class Cactus {
+class Obstacle {
   constructor(ctx, x, y, width, height, image) {
     this.ctx = ctx;
     this.x = x;
@@ -29,4 +29,4 @@ class Cactus {
   }
 }
 
-export default Cactus;
+export default Obstacle;
