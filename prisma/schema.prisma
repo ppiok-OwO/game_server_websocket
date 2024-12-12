@@ -21,32 +21,38 @@ model Users {
   name      String?     @map("name")
   createdAt DateTime    @default(now()) @map("createdAt")
   updatedAt DateTime    @updatedAt @map("updatedAt")
-  Character Characters?
+  character Characters?
 
   @@map("Users")
 }
 
 model Characters {
-  id           Int    @id @default(autoincrement()) @map("id")
-  userId       Int    @unique @map("userId")
-  nickname     String @map("nickname")
-  type         Int    @map("type")
-  totalHp      Int    @map("totalHp")
-  cookingSkill Int    @map("cookingSkill")
-  stats        Json   @map("stats")
-  stage        Json?  @map("stage")
-  gold         Int    @default(1000) @map("gold")
+  id           Int      @id @default(autoincrement()) @map("id")
+  userId       Int      @unique @map("userId")
+  nickname     String   @map("nickname")
+  type         Int      @map("type")
+  totalHp      Int      @map("totalHp")
+  cookingSkill Int      @map("cookingSkill")
+  stats        Json     @map("stats")
+  stage        Json?    @map("stage")
+  gold         Int      @default(1000) @map("gold")
+  score        Int?     @map("score")
+  hiScore      Int?     @map("hiscore")
+  createdAt    DateTime @default(now()) @map("createdAt")
+  updatedAt    DateTime @updatedAt @map("updatedAt")
 
   user        Users         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   Ingredients Ingredients[]
 }
 
 model Ingredients {
-  id          Int    @id @default(autoincrement()) @map("id")
-  characterId Int    @map("characterId")
-  name        String @map("name")
-  type        Int    @map("type")
-  score       Int    @map("score")
+  id          Int      @id @default(autoincrement()) @map("id")
+  characterId Int      @map("characterId")
+  name        String   @map("name")
+  type        Int      @map("type")
+  score       Int      @map("score")
+  createdAt   DateTime @default(now()) @map("createdAt")
+  updatedAt   DateTime @updatedAt @map("updatedAt")
 
   character Characters @relation(fields: [characterId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
