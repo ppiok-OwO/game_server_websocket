@@ -20,16 +20,16 @@ export const checkUser = async (user) => {
 
 export const addUser = async (user) => {
   users.push(user);
-  try {
-    await prisma.users.create({
-      data: {
-        uuid: user.uuid,
-        socketId: user.socketId,
-      },
-    });
-  } catch (err) {
-    console.error(err.name);
-  }
+  // try {
+  //   await prisma.users.create({
+  //     data: {
+  //       uuid: user.uuid,
+  //       socketId: user.socketId,
+  //     },
+  //   });
+  // } catch (err) {
+  //   console.error(err.name);
+  // }
 };
 
 export const removeUser = async (socketId) => {

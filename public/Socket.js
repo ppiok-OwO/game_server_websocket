@@ -28,16 +28,25 @@ const sendEvent = async (handlerId, payload) => {
       payload,
     });
 
-    // 응답 처리
-    const handleResponse = (response) => {
-      if (response.handlerId === handlerId) {
-        socket.off('response', handleResponse); // 리스너 제거
-        resolve(response); // 응답 데이터 반환
-      }
-    };
-
     // 응답 수신 리스너 등록
-    socket.on('response', handleResponse);
+    socket.once('response', (response) => {
+      // 응답 데이터 확인
+
+      try {
+        if (!response) {
+          reject(new Error('서버 응답이 비어 있습니다.'));
+          return;
+        }
+
+        if (response.status === 'success') {
+          resolve(response);
+        } else {
+          reject(new Error(response.message || '알 수 없는 에러'));
+        }
+      } catch (err) {
+        console.error(err.message);
+      }
+    });
   });
 };
 

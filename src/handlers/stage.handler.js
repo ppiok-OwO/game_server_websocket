@@ -4,9 +4,24 @@
 import { getGameAssets } from '../init/asset.js';
 import { getStage, setStage } from '../models/stage.model.js';
 
-export const moveStageHandler = async (uuid, payload) => {
+export const getStageId = async (userId, payload) => {
   // 유저의 현재 스테이지 정보
-  let currentStages = getStage(uuid);
+  let currentStages = getStage(userId);
+  if (!currentStages.length) {
+    console.log('No stages found for user');
+    return { status: 'fail', message: 'No stages found for user' };
+  }
+
+  // 오름차순 -> 가장 큰 스테이지 ID를 확인 <- 유저의 현재 스테이지
+  currentStages.sort((a, b) => b.id - a.id);
+  const currentStageId = currentStages[0].id;
+
+  return { status: 'success', message: currentStageId };
+};
+
+export const moveStageHandler = async (userId, payload) => {
+  // 유저의 현재 스테이지 정보
+  let currentStages = getStage(userId);
   if (!currentStages.length) {
     console.log('No stages found for user');
     return { status: 'fail', message: 'No stages found for user' };
@@ -43,8 +58,7 @@ export const moveStageHandler = async (uuid, payload) => {
     return { status: 'fail', message: 'Target stage not found' };
   }
 
-  await setStage(uuid, payload.targetStage, serverTime);
+  await setStage(userId, payload.targetStage, serverTime);
   console.log('Stage successfully updated to:', payload.targetStage);
   return { status: 'success' };
 };
-

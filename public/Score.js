@@ -30,20 +30,29 @@ class Score {
 
   update = async (deltaTime) => {
     this.time += deltaTime * 0.001;
-    let currentStageId = Math.floor(this.time / 10) + 1000;
 
-    if (
-      Math.floor(this.time) % 10 === 0 && // 스코어가 10의 배수일 때
-      this.lastStageId !== currentStageId && // 마지막으로 알림을 보낸 스테이지와 다를 때
-      Math.floor(this.time) >= 10
-      // && this.stageChange
-    ) {
-      // this.stageChange = false;
-      this.lastStageId = currentStageId; // 현재 스테이지 ID로 업데이트
-      await sendEvent(11, {
-        currentStage: currentStageId - 1,
-        targetStage: currentStageId,
-      });
+    try {
+      let clientStageId = Math.floor(this.time / 10) + 1000;
+      const serverResponse = await sendEvent(4, {});
+      const serverStageId = serverResponse.message; // currentStageId 값을 얻음
+      const serverStageIdNum = +serverStageId;
+      console.log('서버 스테이지 ID:', serverStageId);
+
+      if (
+        Math.floor(this.time) % 10 === 0 && // 스코어가 10의 배수일 때
+        this.lastStageId !== clientStageId && // 마지막으로 알림을 보낸 스테이지와 다를 때
+        Math.floor(this.time) >= 10
+        // && this.stageChange
+      ) {
+        // this.stageChange = false;
+        this.lastStageId = clientStageId; // 현재 스테이지 ID로 업데이트
+        await sendEvent(11, {
+          currentStage: serverStageIdNum,
+          targetStage: clientStageId,
+        });
+      }
+    } catch (err) {
+      console.error('오류 발생:', err.message);
     }
   };
 
