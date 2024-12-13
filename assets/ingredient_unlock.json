@@ -2,11 +2,11 @@
   "name": "ingredient_unlock",
   "version": "1.0.0",
   "data": [
-    { "id": 101, "stage_id": 1001, "ingredient_type": 1 },
-    { "id": 201, "stage_id": 1002, "ingredient_type": 2 },
+    { "id": 101, "stage_id": 1000, "ingredient_type": 1 },
+    { "id": 201, "stage_id": 1001, "ingredient_type": 2 },
     { "id": 301, "stage_id": 1002, "ingredient_type": 3 },
-    { "id": 401, "stage_id": 1002, "ingredient_type": 4 },
-    { "id": 501, "stage_id": 1002, "ingredient_type": 5 },
-    { "id": 601, "stage_id": 1002, "ingredient_type": 6 }
+    { "id": 401, "stage_id": 1003, "ingredient_type": 4 },
+    { "id": 501, "stage_id": 1004, "ingredient_type": 5 },
+    { "id": 601, "stage_id": 1005, "ingredient_type": 6 }
   ]
 }

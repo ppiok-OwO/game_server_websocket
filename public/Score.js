@@ -64,6 +64,7 @@ class Score {
 
   reset() {
     this.score = 0;
+    this.time = 0;
     this.lastStageId = null; // 리셋 시 마지막 스테이지 ID 초기화
   }
 

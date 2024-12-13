@@ -28,8 +28,10 @@ class IngredientController {
     return Math.floor(Math.random() * (max - min + 1) + min);
   }
 
-  createIngredient() {
-    const index = this.getRandomNumber(0, this.ingredientImages.length - 1);
+  createIngredient(score) {
+    const currentStageId = score.lastStageId || 1000;
+    const ingredientIndex = currentStageId - 1000;
+    const index = this.getRandomNumber(0, ingredientIndex);
     const ingredientInfo = this.ingredientImages[index];
     const x = this.canvas.width * 1.5;
     const y = this.getRandomNumber(
@@ -50,10 +52,10 @@ class IngredientController {
     this.ingredients.push(ingredient);
   }
 
-  update(gameSpeed, deltaTime) {
+  update(gameSpeed, deltaTime, score) {
     if (this.nextIngredientInterval <= 0) {
       // 재료 생성
-      this.createIngredient();
+      this.createIngredient(score);
       this.setNextIngredientTime();
     }
 

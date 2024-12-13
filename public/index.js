@@ -21,7 +21,7 @@ const GAME_SPEED_INCREMENT = 0.00001;
 
 // 게임 크기
 const GAME_WIDTH = 800;
-const GAME_HEIGHT = 300;
+const GAME_HEIGHT = 200;
 
 // 플레이어
 // 800 * 200 사이즈의 캔버스에서는 이미지의 기본크기가 크기때문에 1.5로 나눈 값을 사용. (비율 유지)
@@ -195,13 +195,6 @@ function createSprites() {
     };
   });
 
-  ingredientController = new IngredientController(
-    ctx,
-    ingredientImages,
-    scaleRatio,
-    GROUND_SPEED,
-  );
-
   const itemImages = ITEM_CONFIG.map((item) => {
     const image = new Image();
     image.src = item.image;
@@ -221,6 +214,13 @@ function createSprites() {
   );
 
   score = new Score(ctx, scaleRatio);
+
+  ingredientController = new IngredientController(
+    ctx,
+    ingredientImages,
+    scaleRatio,
+    GROUND_SPEED,
+  );
 }
 
 function getScaleRatio() {
@@ -326,7 +326,7 @@ function gameLoop(currentTime) {
     // 선인장
     obstacleCotroller.update(gameSpeed, deltaTime);
     itemController.update(gameSpeed, deltaTime);
-    ingredientController.update(gameSpeed, deltaTime);
+    ingredientController.update(gameSpeed, deltaTime, score);
     // 달리기
     player.update(gameSpeed, deltaTime);
     updateGameSpeed(deltaTime);
