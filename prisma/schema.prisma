@@ -16,6 +16,7 @@ datasource db {
 model Users {
   id        Int         @id @default(autoincrement()) @map("id")
   uuid      String      @unique @map("uuid")
+  socketId  String      @unique @map("socketId")
   email     String?     @unique @map("email")
   password  String?     @map("password")
   name      String?     @map("name")
