@@ -29,7 +29,7 @@ const sendEvent = async (handlerId, payload) => {
     });
 
     // 응답 수신 리스너 등록
-    socket.once('response', (response) => {
+    socket.on('response', (response) => {
       // 응답 데이터 확인
 
       try {
@@ -41,7 +41,7 @@ const sendEvent = async (handlerId, payload) => {
         if (response.status === 'success') {
           resolve(response);
         } else {
-          reject(new Error(response.message || '알 수 없는 에러'));
+          reject(new Error(response.message || 'Unknow Error'));
         }
       } catch (err) {
         console.error(err.message);

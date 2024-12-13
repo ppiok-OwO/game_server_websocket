@@ -19,8 +19,7 @@ class Score {
   score = 0;
   time = 0;
   HIGH_SCORE_KEY = 'highScore';
-  // stageChange = true;
-  lastStageId = null; // 마지막으로 알림을 보낸 스테이지 ID
+  stageId = null;
 
   constructor(ctx, scaleRatio) {
     this.ctx = ctx;
@@ -32,24 +31,28 @@ class Score {
     this.time += deltaTime * 0.001;
 
     try {
-      let clientStageId = Math.floor(this.time / 10) + 1000;
+      // 클라이언트 상의 stageId
+      const clientStageId = Math.floor(this.time / 10) + 1000;
+
+      // serverStageId 값을 불러온다.
       const serverResponse = await sendEvent(4, {});
-      const serverStageId = serverResponse.message; // currentStageId 값을 얻음
-      const serverStageIdNum = +serverStageId;
-      console.log('서버 스테이지 ID:', serverStageId);
+      const serverStageId = serverResponse.message;
+      this.stageId = serverStageId;
 
       if (
-        Math.floor(this.time) % 10 === 0 && // 스코어가 10의 배수일 때
-        this.lastStageId !== clientStageId && // 마지막으로 알림을 보낸 스테이지와 다를 때
-        Math.floor(this.time) >= 10
-        // && this.stageChange
+        Math.floor(this.time) % 10 === 0 && // 클라 기준 경과시간이 10의 배수일 때
+        serverStageId !== clientStageId && // 서버에 기록된 stageId와 클라이언트의 stageId가 다를 때
+        Math.floor(this.time) >= 10 && // 경과 시간이 클라이언트 기준으로 10초 이상 지났을 때
+        clientStageId === serverStageId + 1
       ) {
-        // this.stageChange = false;
-        this.lastStageId = clientStageId; // 현재 스테이지 ID로 업데이트
+        // 스테이지 이동 이벤트를 요청(검증은 서버에서)
         await sendEvent(11, {
-          currentStage: serverStageIdNum,
-          targetStage: clientStageId,
+          currentStage: serverStageId,
+          targetStage: serverStageId + 1,
         });
+      }
+      if (clientStageId !== serverStageId + 1) {
+        throw new Error('Stage mismatch');
       }
     } catch (err) {
       console.error('오류 발생:', err.message);

@@ -25,7 +25,7 @@ export const handleDisconnect = (socket, uuid) => {
 };
 
 // 이벤트마다 사용할 함수
-export const handlerEvent = (io, socket, data) => {
+export const handlerEvent = async (io, socket, data) => {
   if (!CLIENT_VERSION.includes(data.clientVersion)) {
     socket.emit('response', {
       status: 'fail',
@@ -43,13 +43,21 @@ export const handlerEvent = (io, socket, data) => {
     return;
   }
 
-  const response = handler(data.userId, data.payload);
+  try {
+    const response = await handler(data.userId, data.payload);
+    console.log('Handler response:', response); // 디버깅 로그
 
-  // 만약 브로드캐스팅해야할 응답이라면?
-  if (response.broadcast) {
-    io.emit('response', 'broadcast');
-    return;
+    // 브로드캐스팅 여부에 따른 응답 처리
+    if (response.broadcast) {
+      io.emit('response', response); // 브로드캐스트
+    } else {
+      socket.emit('response', response); // 개인 응답
+    }
+  } catch (error) {
+    console.error('Handler 실행 중 오류 발생:', error);
+    socket.emit('response', {
+      status: 'fail',
+      message: 'Internal server error',
+    });
   }
-  // 브로드캐스팅을 안 해도 된다면 개인에게 리턴
-  socket.emit('response', response);
 };

@@ -29,7 +29,7 @@ class IngredientController {
   }
 
   createIngredient(score) {
-    const currentStageId = score.lastStageId || 1000;
+    const currentStageId = score.stageId || 1000;
     const ingredientIndex = currentStageId - 1000;
     const index = this.getRandomNumber(0, ingredientIndex);
     const ingredientInfo = this.ingredientImages[index];

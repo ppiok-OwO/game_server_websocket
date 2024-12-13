@@ -13,10 +13,17 @@ export const getStageId = async (userId, payload) => {
   }
 
   // 오름차순 -> 가장 큰 스테이지 ID를 확인 <- 유저의 현재 스테이지
-  currentStages.sort((a, b) => b.id - a.id);
-  const currentStageId = currentStages[0].id;
+  currentStages.sort((a, b) => b.id - a.id); // 문제 후보(3) 빈 배열 가능성
+  let currentStageId = currentStages[0].id; // 문제 후보(2) null이 담길 가능성
+  // currentStageId = currentStageId.toString(); // 자료형 캐스팅 문제? 문제 후보(1)
 
-  return { status: 'success', message: currentStageId };
+  // return JSON.stringify({
+  //   status: 'success',
+  //   message: 1000,
+  // }); // 해보기
+
+  let result = { status: 'success', message: currentStageId };
+  return result;
 };
 
 export const moveStageHandler = async (userId, payload) => {
