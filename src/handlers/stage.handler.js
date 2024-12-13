@@ -32,10 +32,10 @@ export const moveStageHandler = async (uuid, payload) => {
   console.log('Elapsed time:', elapsedTime);
 
   // 임의로 정한 오차범위(±0.5)를 넘었을 경우 fail
-  // if (elapsedTime < 9.5 || elapsedTime > 10.5) {
-  //   console.log('Server elapsedTime:', elapsedTime);
-  //   return { status: 'fail', message: 'Invalid elapsed time' };
-  // }
+  if (elapsedTime < 9.5 || elapsedTime > 10.5) {
+    console.log('Server elapsedTime:', elapsedTime);
+    return { status: 'fail', message: 'Invalid elapsed time' };
+  }
 
   // targetStage에 대한 검증 <- 게임 에셋에 존재하는 스테이지인가?
   const { stages } = getGameAssets();
@@ -48,27 +48,3 @@ export const moveStageHandler = async (uuid, payload) => {
   return { status: 'success' };
 };
 
-export const getStageScore = async (payload) => {
-  try {
-    // 게임 에셋 가져오기
-    const { stages } = getGameAssets();
-
-    // 해당 stageId에 해당하는 데이터 찾기
-    const stage = stages.data.find((stage) => stage.id === payload.stageId);
-
-    // 스테이지가 존재하지 않으면 에러 반환
-    if (!stage) {
-      return { status: 'fail', message: 'Stage not found' };
-    }
-
-    console.log('stage scroe : ', stage.score);
-
-    return { status: 'success', score: stage.score };
-  } catch (err) {
-    // 에러 처리
-    return {
-      status: 'error',
-      message: 'An error occurred while retrieving the stage score.',
-    };
-  }
-};
