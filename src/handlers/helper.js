@@ -4,6 +4,7 @@ import { getStage, setStage } from '../models/stage.model.js';
 import { getUsers, removeUser } from '../models/user.model.js';
 import handlerMappings from './handlerMapping.js';
 import { createStage } from '../models/stage.model.js';
+import { removeScore } from './score.handler.js';
 
 // 핸들러 내부 로직에 사용될 함수들
 
@@ -20,6 +21,7 @@ export const handleConnection = (socket, uuid) => {
 // 접속 해제할 경우에 사용할 함수
 export const handleDisconnect = (socket, uuid) => {
   removeUser(socket.id); // 사용자 삭제
+  removeScore(uuid); // 사용자의 스코어 삭제
   console.log(`User disconnected: ${socket.id}`);
   console.log('Current users:', getUsers());
 };
@@ -44,8 +46,10 @@ export const handlerEvent = async (io, socket, data) => {
   }
 
   try {
-    const response = await handler(data.userId, data.payload);
-    console.log('Handler response:', response); // 디버깅 로그
+    let response = await handler(data.userId, data.payload);
+    // console.log(response);
+
+    response.handlerId = data.handlerId;
 
     // 브로드캐스팅 여부에 따른 응답 처리
     if (response.broadcast) {

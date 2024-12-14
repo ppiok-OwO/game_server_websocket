@@ -7,7 +7,8 @@ const scores = {}; // 유저의 현재 스코어 배열
 const highScores = {}; // 유저의 최고 스코어 배열
 
 export const setScore = async (userId) => {
-  scores[userId] = [];
+  const timestamp = Date.now();
+  scores[userId] = { score: 0, timestamp };
 };
 
 export const getScore = async (userId) => {
@@ -40,31 +41,67 @@ export const obtainScore = async (userId, payload) => {
   // 최근 5번의 재료 획득 timestamp를 추출하고, 가장 최근의 5번째 요소-1번째 요소 => 1초 미만이라면 어뷰저로 판단한다.
   let currentScores = await getScore(userId);
 
-  if (currentScores.length >= 5) {
-    currentScores.sort((a, b) => b.timestamp - a.timestamp);
-    const recentFiveRecord = currentScores.slice(0, 5);
-    if (
-      (recentFiveRecord[4].timestamp - recentFiveRecord[0].timestamp) / 1000 <
-      1
-    ) {
-      return {
-        status: 'fail',
-        message: 'Score obtained through unauthorized means',
-      };
+  if (currentScores) {
+    const scoreEtries = Object.entries(currentScores);
+
+    if (scoreEtries.length >= 5) {
+      // Object.entries()로 currentScores를 2차원 배열로 변환한다.
+      // timestamp를 기준으로 내림차순 정렬
+      const sortedEntries = scoreEtries.sort(
+        ([, a], [, b]) => b.timestamp - a.timestamp,
+      );
+      // 첫 번째 요소의 timestamp에서 다섯 번째 요소의 timestamp 값을 뺀다.
+      const timestampDiff =
+        sortedEntries[0][1].timestamp - sortedEntries[4][1].timestamp;
+
+      if (timestampDiff / 1000 < 1) {
+        return {
+          status: 'fail',
+          message: 'Score obtained through unauthorized means',
+        };
+      }
     }
   }
 
-  // 검증이 끝났다면 캐릭터가 획득한 스코어를 서버에도 기록해둔다.
-  // 최종: 클라이언트와 서버 간의 총 스코어가 동일해졌는지 검증
   try {
-    await setScore(userId);
-    scores[userId].push({ score: serverIngScore, timestamp: clientTimestamp });
+    // 검증이 끝났다면 캐릭터가 획득한 스코어를 서버에도 기록해둔다.
+    // 기존에 스코어 데이터가 없었던 경우
+    if (!currentScores) {
+      await setScore(userId);
+      currentScores = await getScore(userId);
+    }
+    currentScores.score += serverIngScore;
 
-    const serverScore = await getScore(userId);
-    if (clientScore !== serverScore) {
+    // 최종: 클라이언트와 서버 간의 총 스코어가 동일해졌는지 검증
+    const serverScore = currentScores.score;
+    const newClientScore = clientScore + serverIngScore;
+    // console.log('serverScore: ', serverScore);
+
+    if (newClientScore !== serverScore) {
       return { status: 'fail', message: 'Score mismatch' };
     }
+
+    let result = { status: 'success', message: serverIngScore };
+    // console.log('result: ', result.message);
+    return result;
   } catch (err) {
     console.error(err.message);
+  }
+};
+
+export const removeScore = async (userId) => {
+  if (scores.hasOwnProperty(userId)) {
+    // userId가 scores에 존재하는지 확인
+    try {
+      const removedScore = scores[userId]; // 삭제 전에 데이터 백업
+      delete scores[userId]; // scores 객체에서 해당 userId 삭제
+      return removedScore; // 삭제된 데이터를 반환
+    } catch (err) {
+      console.error(err.name); // 에러 로그 출력
+      throw new Error('Score 삭제 중 오류 발생');
+    }
+  } else {
+    console.error('해당 userId를 찾을 수 없음');
+    return null; // 해당 userId가 없을 경우 null 반환
   }
 };

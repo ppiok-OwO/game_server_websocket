@@ -20,7 +20,7 @@ socket.on('connection', (data) => {
 
 const sendEvent = async (handlerId, payload) => {
   return new Promise((resolve, reject) => {
-    // 서버에 이벤트 전송
+    // 서버로 이벤트 전송
     socket.emit('event', {
       userId,
       clientVersion: CLIENT_VERSION,
@@ -28,25 +28,33 @@ const sendEvent = async (handlerId, payload) => {
       payload,
     });
 
-    // 응답 수신 리스너 등록
-    socket.on('response', (response) => {
-      // 응답 데이터 확인
-
+    // 위에서 전송한 이벤트의 응답을 받기 위해 수신 리스너 등록
+    const responseListener = (response) => {
       try {
         if (!response) {
           reject(new Error('서버 응답이 비어 있습니다.'));
           return;
         }
 
-        if (response.status === 'success') {
-          resolve(response);
-        } else {
-          reject(new Error(response.message || 'Unknow Error'));
+        // handlerId를 비교하여 해당 응답인지 확인
+        if (response.handlerId === handlerId) {
+          if (response.status === 'success') {
+            resolve(response);
+          } else {
+            reject(new Error(response.message || 'Unknown Error'));
+          }
+
+          // 응답 처리 후 리스너 제거
+          socket.off('response', responseListener);
         }
       } catch (err) {
         console.error(err.message);
+        socket.off('response', responseListener); // 에러 발생 시에도 리스너 제거
       }
-    });
+    };
+
+    // 리스너 등록
+    socket.on('response', responseListener);
   });
 };
 

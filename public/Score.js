@@ -50,25 +50,42 @@ class Score {
           currentStage: serverStageId,
           targetStage: serverStageId + 1,
         });
-      }
-      if (clientStageId !== serverStageId + 1) {
-        throw new Error('Stage mismatch');
+        if (clientStageId !== serverStageId + 1) {
+          throw new Error('Stage mismatch');
+        }
       }
     } catch (err) {
       console.error('오류 발생:', err.message);
     }
   };
 
-  getIngredient(ingredientId) {
-    for (let i = 1; i <= 5; i++) {
-      if (ingredientId % 6 === i) {
-        this.score += 10 * i;
-      }
-    }
-    if (ingredientId % 6 === 0) {
-      this.score += 10 * 6;
-    }
-  }
+  getIngredient = async (ingredientId) => {
+    // for (let i = 1; i <= 5; i++) {
+    //   if (ingredientId % 6 === i) {
+    //     this.score += 10 * i;
+    //   }
+    // }
+    // if (ingredientId % 6 === 0) {
+    //   this.score += 10 * 6;
+    // }
+
+    const clientScore = this.score;
+    const clientStageId = Math.floor(this.time / 10) + 1000;
+    const clientTimestamp = Date.now(); // 현재 타임스탬프
+
+    // 서버에 패킷을 보내고, 재료의 스코어 데이터를 응답받는다.
+    const ingScoreResponse = await sendEvent(5, {
+      clientIngId: ingredientId,
+      clientScore,
+      clientStageId,
+      clientTimestamp,
+    });
+    console.log('ingScoreResponse: ', ingScoreResponse);
+    const serverIngScore = ingScoreResponse.message;
+    console.log('serverIngScore: ', serverIngScore);
+
+    this.score += serverIngScore;
+  };
 
   getItem(itemId) {
     this.score += 0;
