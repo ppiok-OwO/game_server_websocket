@@ -18,9 +18,9 @@ socket.on('connection', (data) => {
   userId = data.uuid;
 });
 
-const sendEvent = async (handlerId, payload) => {
+export const sendEvent = async (handlerId, payload) => {
   return new Promise((resolve, reject) => {
-    // 서버로 이벤트 전송
+    // 서버로 이벤트 전송한다.
     socket.emit('event', {
       userId,
       clientVersion: CLIENT_VERSION,
@@ -28,34 +28,36 @@ const sendEvent = async (handlerId, payload) => {
       payload,
     });
 
-    // 위에서 전송한 이벤트의 응답을 받기 위해 수신 리스너 등록
+    // 위에서 전송한 이벤트의 응답을 비동기 처리한 뒤, Promise 객체 안에 반환해주는 함수
     const responseListener = (response) => {
       try {
         if (!response) {
+          // 응답이 비어있다면 reject
           reject(new Error('서버 응답이 비어 있습니다.'));
           return;
         }
 
-        // handlerId를 비교하여 해당 응답인지 확인
+        // 비어있지 않다면, handlerId를 비교하여 내가 원한 응답인지 확인한다.
         if (response.handlerId === handlerId) {
           if (response.status === 'success') {
+            // 응답의 형식이 적절하다면 resolve
             resolve(response);
           } else {
+            // 응답의 형식이 적절하지 않다면 'Unknown Error'
             reject(new Error(response.message || 'Unknown Error'));
           }
 
-          // 응답 처리 후 리스너 제거
+          // 응답을 처리한 후 이벤트 리스너 제거 => sendEvent 요청을 할 때마다 이벤트 리스너 on/off를 반복하는 구조
           socket.off('response', responseListener);
         }
       } catch (err) {
         console.error(err.message);
-        socket.off('response', responseListener); // 에러 발생 시에도 리스너 제거
+        // 에러 발생 시에도 이벤트 리스너 제거
+        socket.off('response', responseListener);
       }
     };
 
-    // 리스너 등록
+    // esponseListener를 socket.on의 콜백함수로 등록
     socket.on('response', responseListener);
   });
 };
-
-export { sendEvent };
