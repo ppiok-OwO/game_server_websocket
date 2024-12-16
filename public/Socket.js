@@ -18,6 +18,12 @@ socket.on('connection', (data) => {
   userId = data.uuid;
 });
 
+socket.on('response', (response) => {
+  if (response.broadcast) {
+    console.log('전체 알림:', response.message);
+  }
+});
+
 export const sendEvent = async (handlerId, payload) => {
   return new Promise((resolve, reject) => {
     // 서버로 이벤트 전송한다.
@@ -31,13 +37,15 @@ export const sendEvent = async (handlerId, payload) => {
     // 위에서 전송한 이벤트의 응답을 비동기 처리한 뒤, Promise 객체 안에 반환해준다.
     const responseListener = (response) => {
       try {
+        if (response.broadcast) return;
+        
         if (!response) {
           // 응답이 비어있다면 reject
           reject(new Error('서버 응답이 비어 있습니다.'));
           return;
         }
 
-        // 비어있지 않다면, handlerId를 비교하여 내가 원한 응답인지 확인한다.
+        // 비어있지 않다면, response의 handlerId가 내가 요청했던 handlerId와 같은지를 비교한다.
         if (response.handlerId === handlerId) {
           if (response.status === 'success') {
             // 응답의 형식이 적절하다면 resolve를 저장
@@ -61,43 +69,3 @@ export const sendEvent = async (handlerId, payload) => {
     socket.on('response', responseListener);
   });
 };
-
-/** sendEvent 함수 상태처리 기반으로 바꿔보기 */
-// const pendingRequests = {}; // 요청-응답 매핑 객체
-
-// // 요청을 보내고 응답을 저장하는 함수
-// export const sendEvent = async (handlerId, payload) => {
-//   return new Promise((resolve, reject) => {
-//     // 서버로 이벤트 전송한다.
-//     socket.emit('event', {
-//       userId,
-//       clientVersion: CLIENT_VERSION,
-//       handlerId,
-//       payload,
-//     });
-//   });
-
-//   // pendingRequests 객체 속에 Promise의 결과가 저장되어 있다.
-//   pendingRequests[handlerId] = { resolve, reject };
-// };
-
-// // 서버로부터의 응답을 처리하는 리스너
-// socket.on('response', (response) => {
-//   const { handlerId } = response;
-
-//   // 해당 handlerId에 대한 요청이 있었는지 확인
-//   if (pendingRequests[handlerId]) {
-//     const { resolve, reject } = pendingRequests[handlerId];
-
-//     if (response.status === 'success') {
-//       resolve(response);
-//     } else {
-//       reject(new Error(response.message || 'Unknown error'));
-//     }
-
-//     // 요청이 처리되었으므로 매핑에서 제거
-//     delete pendingRequests[handlerId];
-//   } else {
-//     console.warn(`Unhandled response for handlerId: ${handlerId}`);
-//   }
-// });

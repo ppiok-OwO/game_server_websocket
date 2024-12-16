@@ -97,12 +97,16 @@ class Score {
     this.lastStageId = null; // 리셋 시 마지막 스테이지 ID 초기화
   }
 
-  setHighScore() {
-    const highScore = Number(localStorage.getItem(this.HIGH_SCORE_KEY));
-    if (this.score > highScore) {
-      localStorage.setItem(this.HIGH_SCORE_KEY, Math.floor(this.score));
-    }
-  }
+  getHighScore = async () => {
+    // const highScore = Number(localStorage.getItem(this.HIGH_SCORE_KEY));
+    // if (this.score > highScore) {
+    //   localStorage.setItem(this.HIGH_SCORE_KEY, Math.floor(this.score));
+    // }
+    // const score = this.getScore();
+    // const highScore = await sendEvent(6, { userId, score });
+
+    
+  };
 
   getScore() {
     return this.score;

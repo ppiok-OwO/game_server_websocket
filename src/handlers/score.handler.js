@@ -3,12 +3,26 @@ import { getStage, setStage } from '../models/stage.model.js';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../utils/prisma/index.js';
 
-const scores = {}; // 유저의 현재 스코어 배열
-const highScores = {}; // 유저의 최고 스코어 배열
+const scores = {}; // 유저의 현재 스코어 객체
+const highScores = {}; // 유저의 최고 스코어 객체
 
-export const setScore = async (userId) => {
+export const setScore = async (userId, score) => {
   const timestamp = Date.now();
-  scores[userId] = { score: 0, timestamp };
+
+  // 유저별 스코어 배열 초기화
+  if (!scores[userId]) {
+    scores[userId] = [];
+  }
+
+  // 가장 최근 기록된 스코어 가져오기
+  const recentScore =
+    scores[userId].length > 0
+      ? scores[userId][scores[userId].length - 1].score
+      : 0;
+
+  // 새로운 점수를 계산하여 추가
+  const newScore = recentScore + score;
+  scores[userId].push({ score: newScore, timestamp });
 };
 
 export const getScore = async (userId) => {
@@ -42,17 +56,15 @@ export const obtainScore = async (userId, payload) => {
   let currentScores = await getScore(userId);
 
   if (currentScores) {
-    const scoreEtries = Object.entries(currentScores);
+    if (currentScores.length >= 5) {
+      // 최근 5개의 점수만 추출
+      const recentScores = currentScores.slice(-5); // 끝에서 5개의 요소를 가져옴
 
-    if (scoreEtries.length >= 5) {
-      // Object.entries()로 currentScores를 2차원 배열로 변환한다.
-      // timestamp를 기준으로 내림차순 정렬
-      const sortedEntries = scoreEtries.sort(
-        ([, a], [, b]) => b.timestamp - a.timestamp,
-      );
-      // 첫 번째 요소의 timestamp에서 다섯 번째 요소의 timestamp 값을 뺀다.
       const timestampDiff =
-        sortedEntries[0][1].timestamp - sortedEntries[4][1].timestamp;
+        recentScores[recentScores.length - 1].timestamp -
+        recentScores[0].timestamp;
+
+      console.log(`Obtain score time diff: ${timestampDiff / 1000}`);
 
       if (timestampDiff / 1000 < 1) {
         return {
@@ -64,21 +76,25 @@ export const obtainScore = async (userId, payload) => {
   }
 
   try {
-    // 검증이 끝났다면 캐릭터가 획득한 스코어를 서버에도 기록해둔다.
-    // 기존에 스코어 데이터가 없었던 경우
-    if (!currentScores) {
-      await setScore(userId);
-      currentScores = await getScore(userId);
-    }
-    currentScores.score += serverIngScore;
+    await setScore(userId, serverIngScore);
 
     // 최종: 클라이언트와 서버 간의 총 스코어가 동일해졌는지 검증
-    const serverScore = currentScores.score;
+    // 최근 스코어 구하기
+    const scores = await getScore(userId);
+    const serverScore = scores[scores.length - 1].score;
     const newClientScore = clientScore + serverIngScore;
     // console.log('serverScore: ', serverScore);
 
     if (newClientScore !== serverScore) {
       return { status: 'fail', message: 'Score mismatch' };
+    }
+
+    // 최고 기록이라면 기록해두기
+    if (!highScores[userId] || serverScore > highScores[userId].highestScore) {
+      highScores[userId] = {
+        highestScore: serverScore,
+        timestamp: scores[scores.length - 1].timestamp,
+      };
     }
 
     let result = { status: 'success', message: serverIngScore };

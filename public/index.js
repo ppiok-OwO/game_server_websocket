@@ -306,7 +306,7 @@ function clearScreen() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
-function gameLoop(currentTime) {
+async function gameLoop(currentTime) {
   if (previousTime === null) {
     previousTime = currentTime;
     requestAnimationFrame(gameLoop);
@@ -339,6 +339,9 @@ function gameLoop(currentTime) {
     gameover = true;
     score.setHighScore();
     setupGameReset();
+    let gameOverResponse = await sendEvent(6, {});
+    let gameOverMessage = gameOverResponse.message;
+    console.log(gameOverMessage);
   }
   const collideWithItem = itemController.collideWith(player);
   if (collideWithItem && collideWithItem.itemId) {
