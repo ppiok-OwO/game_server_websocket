@@ -25,8 +25,12 @@ export const setScore = async (userId, score) => {
   scores[userId].push({ score: newScore, timestamp });
 };
 
-export const getScore = async (userId) => {
+export const getScore = (userId) => {
   return scores[userId];
+};
+
+export const getHighScore = (userId) => {
+  return highScores[userId];
 };
 
 export const obtainScore = async (userId, payload) => {
@@ -103,6 +107,19 @@ export const obtainScore = async (userId, payload) => {
   } catch (err) {
     console.error(err.message);
   }
+};
+
+export const getHighScoreHandler = async (userId, payload) => {
+  const highScoreRecord = getHighScore(userId);
+  let highScore = 0;
+  if (highScoreRecord) {
+    highScore = highScoreRecord.highestScore;
+  }
+  // console.log(`highScore: ${highScore}`);
+
+  let result = { status: 'success', message: highScore };
+
+  return result;
 };
 
 export const removeScore = async (userId) => {

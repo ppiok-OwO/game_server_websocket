@@ -18,7 +18,8 @@ socket.on('connection', (data) => {
 class Score {
   score = 0;
   time = 0;
-  HIGH_SCORE_KEY = 'highScore';
+  // HIGH_SCORE_KEY = 'highScore';
+  highScore = 0;
   stageId = null;
 
   constructor(ctx, scaleRatio) {
@@ -60,15 +61,6 @@ class Score {
   };
 
   getIngredient = async (ingredientId) => {
-    // for (let i = 1; i <= 5; i++) {
-    //   if (ingredientId % 6 === i) {
-    //     this.score += 10 * i;
-    //   }
-    // }
-    // if (ingredientId % 6 === 0) {
-    //   this.score += 10 * 6;
-    // }
-
     const clientScore = this.score;
     const clientStageId = Math.floor(this.time / 10) + 1000;
     const clientTimestamp = Date.now(); // 현재 타임스탬프
@@ -98,24 +90,19 @@ class Score {
   }
 
   getHighScore = async () => {
-    // const highScore = Number(localStorage.getItem(this.HIGH_SCORE_KEY));
-    // if (this.score > highScore) {
-    //   localStorage.setItem(this.HIGH_SCORE_KEY, Math.floor(this.score));
-    // }
-    // const score = this.getScore();
-    // const highScore = await sendEvent(6, { userId, score });
+    const highScoreResponse = await sendEvent(7, {});
+    const serverHighScore = highScoreResponse.message;
+    console.log(`highScore: ${serverHighScore}`);
 
-    
+    this.highScore = serverHighScore;
   };
 
   getScore() {
     return this.score;
   }
 
-  draw() {
-    const highScore = Number(localStorage.getItem(this.HIGH_SCORE_KEY));
+  draw = async () => {
     const y = 20 * this.scaleRatio;
-
     const fontSize = 20 * this.scaleRatio;
     this.ctx.font = `${fontSize}px monospace`;
     this.ctx.fillStyle = '#525250';
@@ -124,7 +111,7 @@ class Score {
     const highScoreX = scoreX - 165 * this.scaleRatio;
 
     const scorePadded = Math.floor(this.score).toString().padStart(6, 0);
-    const highScorePadded = highScore.toString().padStart(6, 0);
+    const highScorePadded = this.highScore.toString().padStart(6, 0);
 
     const timePadded = Math.floor(this.time).toString().padStart(4, 0);
     const tiemX = 20 * this.scaleRatio;
@@ -132,7 +119,7 @@ class Score {
     this.ctx.fillText(` SCORE ${scorePadded}`, scoreX, y);
     this.ctx.fillText(`HISCORE ${highScorePadded} |`, highScoreX, y);
     this.ctx.fillText(`TIME ${timePadded}`, tiemX, y);
-  }
+  };
 }
 
 export default Score;

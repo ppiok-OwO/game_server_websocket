@@ -60,13 +60,13 @@ export const gameEnd = async (uuid, payload) => {
   //   return { status: 'fail', message: 'Score verification failed' };
   // }
 
+  let recentScore = 0;
   const currentScores = await getScore(uuid);
-  if (!currentScores || currentScores.length === 0) {
-    return { status: 'fail', message: 'No scores found' };
-  }
-  const recentScore = currentScores.slice(-1)[0].score;
 
-  removeScore(uuid);
+  if (currentScores) {
+    recentScore = currentScores.slice(-1)[0].score;
+    removeScore(uuid);
+  }
 
   // 검증이 통과되면 게임 종료 처리
   return { status: 'success', message: 'Game ended successfully', recentScore };

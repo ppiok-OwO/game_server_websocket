@@ -214,6 +214,7 @@ function createSprites() {
   );
 
   score = new Score(ctx, scaleRatio);
+  score.getHighScore();
 
   ingredientController = new IngredientController(
     ctx,
@@ -337,7 +338,7 @@ async function gameLoop(currentTime) {
 
   if (!gameover && obstacleCotroller.collideWith(player)) {
     gameover = true;
-    score.setHighScore();
+    score.getHighScore();
     setupGameReset();
     let gameOverResponse = await sendEvent(6, {});
     let gameOverMessage = gameOverResponse.message;
@@ -356,7 +357,7 @@ async function gameLoop(currentTime) {
   player.draw();
   obstacleCotroller.draw();
   ground.draw();
-  score.draw();
+  await score.draw();
   itemController.draw();
   ingredientController.draw();
 
