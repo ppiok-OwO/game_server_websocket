@@ -11,11 +11,18 @@ export const socket = io('http://localhost:3000', {
 });
 // io: Socket.IO 라이브러리에서 제공하는 함수로, 웹소켓 연결을 쉽게 설정하고 관리할 수 있게 한다.
 
-let userId = null;
+let userId = localStorage.getItem('userUUID') || null;
 
 socket.on('connection', (data) => {
-  console.log('connection: ', data);
-  userId = data.uuid;
+  if (!userId) {
+    userId = data.uuid;
+    localStorage.setItem('userUUID', userId);
+  }
+  if (userId) {
+    socket.emit('connection', { uuid: userId });
+  }
+
+  console.log('connection: ', userId);
 });
 
 socket.on('response', (response) => {
@@ -38,7 +45,7 @@ export const sendEvent = async (handlerId, payload) => {
     const responseListener = (response) => {
       try {
         if (response.broadcast) return;
-        
+
         if (!response) {
           // 응답이 비어있다면 reject
           reject(new Error('서버 응답이 비어 있습니다.'));
@@ -69,3 +76,5 @@ export const sendEvent = async (handlerId, payload) => {
     socket.on('response', responseListener);
   });
 };
+
+export { userId };

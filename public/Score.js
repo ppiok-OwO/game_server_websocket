@@ -1,17 +1,6 @@
 import { sendEvent } from './Socket.js';
 import { socket } from './Socket.js';
-
-let userId = null;
-
-// 서버에서 UUID를 받을 수 있도록 설정
-socket.on('connection', (data) => {
-  if (data && data.uuid) {
-    userId = data.uuid;
-    console.log('User ID received:', userId);
-  } else {
-    console.error('Failed to load userId from server.');
-  }
-});
+import { userId } from './Socket.js';
 
 // =======================
 
@@ -92,9 +81,10 @@ class Score {
   getHighScore = async () => {
     const highScoreResponse = await sendEvent(7, {});
     const serverHighScore = highScoreResponse.message;
-    console.log(`highScore: ${serverHighScore}`);
+    // console.log(`highScore: ${serverHighScore}`);
 
     this.highScore = serverHighScore;
+    // return serverHighScore;
   };
 
   getScore() {
@@ -102,6 +92,7 @@ class Score {
   }
 
   draw = async () => {
+    // const highScore = await this.getHighScore();
     const y = 20 * this.scaleRatio;
     const fontSize = 20 * this.scaleRatio;
     this.ctx.font = `${fontSize}px monospace`;

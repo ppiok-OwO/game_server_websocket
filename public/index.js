@@ -7,6 +7,7 @@ import './Socket.js';
 import { sendEvent } from './Socket.js';
 import { socket } from './Socket.js';
 import IngredientController from './IngredientController.js';
+import { userId } from './Socket.js';
 
 // 게임 캔버스
 const canvas = document.getElementById('game');
@@ -127,16 +128,6 @@ let gameover = false;
 let hasAddedEventListenersForRestart = false;
 let waitingToStart = true;
 let uuid = null;
-
-// 서버에서 UUID를 받을 수 있도록 설정
-socket.on('connection', (data) => {
-  if (data && data.uuid) {
-    uuid = data.uuid;
-    console.log('User ID received:', uuid);
-  } else {
-    console.error('Failed to load uuid from server.');
-  }
-});
 
 function createSprites() {
   // 비율에 맞는 크기
@@ -322,9 +313,6 @@ async function gameLoop(currentTime) {
   clearScreen();
 
   if (!gameover && !waitingToStart) {
-    // update
-    // 땅이 움직임
-    ground.update(gameSpeed, deltaTime);
     // 선인장
     obstacleCotroller.update(gameSpeed, deltaTime);
     itemController.update(gameSpeed, deltaTime);
@@ -332,6 +320,8 @@ async function gameLoop(currentTime) {
     // 달리기
     player.update(gameSpeed, deltaTime);
     updateGameSpeed(deltaTime);
+    // 땅이 움직임
+    ground.update(gameSpeed, deltaTime);
 
     score.update(deltaTime);
   }
@@ -351,15 +341,16 @@ async function gameLoop(currentTime) {
   const collideWithIngredient = ingredientController.collideWith(player);
   if (collideWithIngredient && collideWithIngredient.ingredientId) {
     score.getIngredient(collideWithIngredient.ingredientId);
+    score.getHighScore();
   }
 
   // draw
   player.draw();
   obstacleCotroller.draw();
-  ground.draw();
   await score.draw();
   itemController.draw();
   ingredientController.draw();
+  ground.draw();
 
   if (gameover) {
     showGameOver();
