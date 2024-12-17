@@ -54,18 +54,26 @@ class Score {
     const clientStageId = Math.floor(this.time / 10) + 1000;
     const clientTimestamp = Date.now(); // 현재 타임스탬프
 
-    // 서버에 패킷을 보내고, 재료의 스코어 데이터를 응답받는다.
-    const ingScoreResponse = await sendEvent(5, {
-      clientIngId: ingredientId,
-      clientScore,
-      clientStageId,
-      clientTimestamp,
-    });
-    console.log('ingScoreResponse: ', ingScoreResponse);
-    const serverIngScore = ingScoreResponse.message;
-    console.log('serverIngScore: ', serverIngScore);
+    try {
+      // 서버에 패킷을 보내고, 재료의 스코어 데이터를 응답받는다.
+      const ingScoreResponse = await sendEvent(5, {
+        clientIngId: ingredientId,
+        clientScore,
+        clientStageId,
+        clientTimestamp,
+      });
+      console.log('ingScoreResponse: ', ingScoreResponse);
+      const serverIngScore = ingScoreResponse.message;
+      console.log('serverIngScore: ', serverIngScore);
 
-    this.score += serverIngScore;
+      this.score += serverIngScore;
+
+      if (this.score > this.highScore) {
+        this.highScore = this.score;
+      }
+    } catch (err) {
+      console.error(err.message);
+    }
   };
 
   getItem(itemId) {

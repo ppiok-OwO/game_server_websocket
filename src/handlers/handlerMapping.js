@@ -1,6 +1,6 @@
 import { moveStageHandler, getStageId } from './stage.handler.js';
 import { gameStart, gameEnd, gameOver } from './game.handler.js';
-import { getHighScoreHandler, obtainScore } from './score.handler.js';
+import { getHighScore, obtainScore } from './score.handler.js';
 
 const handlerMappings = {
   2: gameStart,
@@ -8,7 +8,7 @@ const handlerMappings = {
   4: getStageId,
   5: obtainScore,
   6: gameOver,
-  7: getHighScoreHandler,
+  7: getHighScore,
   11: moveStageHandler,
 };
 

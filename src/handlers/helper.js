@@ -49,6 +49,11 @@ export const handlerEvent = async (io, socket, data) => {
     let response = await handler(data.userId, data.payload);
     // console.log(response);
 
+    if (!response) {
+      console.log(`response not found`);
+      throw new Error('Handler did not return a response');
+    }
+
     response.handlerId = data.handlerId;
 
     // 브로드캐스팅 여부에 따른 응답 처리

@@ -31,50 +31,54 @@ socket.on('response', (response) => {
   }
 });
 
-export const sendEvent = async (handlerId, payload) => {
+const responseListeners = {}; // 핸들러 ID별 리스너 관리 객체
+
+export const sendEvent = (handlerId, payload) => {
   return new Promise((resolve, reject) => {
-    // 서버로 이벤트 전송한다.
+    // 리스너 등록
+    responseListeners[handlerId] = (response) => {
+      try {
+        if (!response) {
+          reject(new Error('서버 응답이 비어 있습니다.'));
+          return;
+        }
+
+        // handlerId 일치 시 처리
+        if (response.handlerId === handlerId) {
+          if (response.status === 'success') {
+            resolve(response); // 성공 응답 반환
+          } else {
+            reject(new Error(response.message || 'Unknown Error')); // 실패 응답
+          }
+
+          delete responseListeners[handlerId]; // 리스너 제거
+        }
+      } catch (err) {
+        console.error(err.message);
+        delete responseListeners[handlerId]; // 에러 발생 시 리스너 제거
+        reject(err);
+      }
+    };
+
+    // 이벤트 전송
     socket.emit('event', {
       userId,
       clientVersion: CLIENT_VERSION,
       handlerId,
       payload,
     });
-
-    // 위에서 전송한 이벤트의 응답을 비동기 처리한 뒤, Promise 객체 안에 반환해준다.
-    const responseListener = (response) => {
-      try {
-        if (response.broadcast) return;
-
-        if (!response) {
-          // 응답이 비어있다면 reject
-          reject(new Error('서버 응답이 비어 있습니다.'));
-          return;
-        }
-
-        // 비어있지 않다면, response의 handlerId가 내가 요청했던 handlerId와 같은지를 비교한다.
-        if (response.handlerId === handlerId) {
-          if (response.status === 'success') {
-            // 응답의 형식이 적절하다면 resolve를 저장
-            resolve(response);
-          } else {
-            // 응답의 형식이 적절하지 않다면 리젝트를 저장 - 에러 메시지 or 'Unknown Error'
-            reject(new Error(response.message || 'Unknown Error'));
-          }
-
-          // 응답을 처리한 후 이벤트 리스너 제거 => sendEvent 요청을 할 때마다 이벤트 리스너 on/off를 반복하는 구조
-          socket.off('response', responseListener);
-        }
-      } catch (err) {
-        console.error(err.message);
-        // 에러 발생 시에도 이벤트 리스너 제거
-        socket.off('response', responseListener);
-      }
-    };
-
-    // responseListener를 socket.on의 콜백함수로 등록
-    socket.on('response', responseListener);
   });
 };
+
+socket.on('response', (response) => {
+  const { handlerId } = response;
+
+  // handlerId에 해당하는 리스너 실행
+  if (responseListeners[handlerId]) {
+    responseListeners[handlerId](response);
+  } else {
+    console.warn(`No listener found for handlerId ${handlerId}`);
+  }
+});
 
 export { userId };

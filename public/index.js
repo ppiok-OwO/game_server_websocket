@@ -341,13 +341,12 @@ async function gameLoop(currentTime) {
   const collideWithIngredient = ingredientController.collideWith(player);
   if (collideWithIngredient && collideWithIngredient.ingredientId) {
     score.getIngredient(collideWithIngredient.ingredientId);
-    score.getHighScore();
   }
 
   // draw
   player.draw();
   obstacleCotroller.draw();
-  await score.draw();
+  score.draw();
   itemController.draw();
   ingredientController.draw();
   ground.draw();

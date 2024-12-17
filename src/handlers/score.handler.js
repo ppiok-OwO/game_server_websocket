@@ -1,36 +1,40 @@
 import { getGameAssets } from '../init/asset.js';
 import { getStage, setStage } from '../models/stage.model.js';
-import { Prisma } from '@prisma/client';
-import { prisma } from '../utils/prisma/index.js';
+import Redis from 'ioredis';
 
-const scores = {}; // 유저의 현재 스코어 객체
-const highScores = {}; // 유저의 최고 스코어 객체
+const redis = new Redis(); // Redis 인스턴스 생성
 
 export const setScore = async (userId, score) => {
-  const timestamp = Date.now();
-
-  // 유저별 스코어 배열 초기화
-  if (!scores[userId]) {
-    scores[userId] = [];
-  }
-
   // 가장 최근 기록된 스코어 가져오기
-  const recentScore =
-    scores[userId].length > 0
-      ? scores[userId][scores[userId].length - 1].score
-      : 0;
+  const getRecentScore = await getScore(userId, 1);
+  const recentScore = getRecentScore[0]?.score || 0;
 
   // 새로운 점수를 계산하여 추가
   const newScore = recentScore + score;
-  scores[userId].push({ score: newScore, timestamp });
+  // Redis 리스트에 스코어와 타임스탬프 추가
+  const scoreData = JSON.stringify({ score: newScore, timestamp: Date.now() });
+  await redis.lpush(`scores:${userId}`, scoreData); // 점수 추가
+
+  // 점수 리스트의 길이 제한 (최신 10개만 유지)
+  await redis.ltrim(`scores:${userId}`, 0, 19); // 상위 20개 점수 유지
 };
 
-export const getScore = (userId) => {
-  return scores[userId];
-};
+export const getScore = async (userId, count = 10) => {
+  try {
+    // count만큼 최신 점수 가져오기
+    const scores = await redis.lrange(`scores:${userId}`, 0, count - 1);
 
-export const getHighScore = (userId) => {
-  return highScores[userId];
+    // 데이터가 없으면 빈 배열 반환
+    if (!scores || scores.length === 0) {
+      return [];
+    }
+
+    // JSON 파싱
+    return scores.map((score) => JSON.parse(score));
+  } catch (err) {
+    console.error('Error fetching scores:', err.message);
+    return [];
+  }
 };
 
 export const obtainScore = async (userId, payload) => {
@@ -57,19 +61,21 @@ export const obtainScore = async (userId, payload) => {
 
   // 재료를 획득하는 빈도 검증하기(어뷰저 적발)
   // 최근 5번의 재료 획득 timestamp를 추출하고, 가장 최근의 5번째 요소-1번째 요소 => 1초 미만이라면 어뷰저로 판단한다.
-  let currentScores = await getScore(userId);
+  try {
+    // 새로운 점수 저장하기
+    await setScore(userId, serverIngScore);
+    // 어뷰저 검증 - 최근 5개의 점수 타임스탬프 확인
+    const recentScores = await getScore(userId, 5); // 최신 5개 점수 가져오기
 
-  if (currentScores) {
-    if (currentScores.length >= 5) {
-      // 최근 5개의 점수만 추출
-      const recentScores = currentScores.slice(-5); // 끝에서 5개의 요소를 가져옴
-
-      const timestampDiff =
-        recentScores[recentScores.length - 1].timestamp -
-        recentScores[0].timestamp;
-
+    if (recentScores.length >= 5) {
+      // map()을 써서 다섯 개의 레코드의 timestamp로 새로운 배열 생성
+      const timestamps = recentScores.map((entry) => entry.timestamp);
+      // 첫 번째 레코드의 timestamp에서 마지막 레코드의 timestamp를 뺀다.
+      // 왜냐하면 redis의 lpush 명령어는 리스트의 맨앞에 데이터를 추가하기 때문이다.
+      const timestampDiff = timestamps[0] - timestamps[timestamps.length - 1];
       console.log(`Obtain score time diff: ${timestampDiff / 1000}`);
 
+      // 1초 미만이면 어뷰저라고 판단
       if (timestampDiff / 1000 < 1) {
         return {
           status: 'fail',
@@ -77,64 +83,44 @@ export const obtainScore = async (userId, payload) => {
         };
       }
     }
-  }
 
-  try {
-    await setScore(userId, serverIngScore);
+    // 최고 점수를 저장하기 위해 키값 생성
+    const highScoreKey = `highscores`;
 
     // 최종: 클라이언트와 서버 간의 총 스코어가 동일해졌는지 검증
-    // 최근 스코어 구하기
-    const scores = await getScore(userId);
-    const serverScore = scores[scores.length - 1].score;
+    const recentScore = await getScore(userId, 1); // 서버에 저장된 최근 점수 JSON 파싱
+    const serverScore = recentScore[0]?.score || 0;
     const newClientScore = clientScore + serverIngScore;
-    // console.log('serverScore: ', serverScore);
 
     if (newClientScore !== serverScore) {
       return { status: 'fail', message: 'Score mismatch' };
     }
 
-    // 최고 기록이라면 기록해두기
-    if (!highScores[userId] || serverScore > highScores[userId].highestScore) {
-      highScores[userId] = {
-        highestScore: serverScore,
-        timestamp: scores[scores.length - 1].timestamp,
-      };
-    }
+    // 최고 기록이라면 기록해두기(zadd의 GT 옵션 사용)
+    await redis.zadd(highScoreKey, 'GT', serverScore, userId);
 
     let result = { status: 'success', message: serverIngScore };
-    // console.log('result: ', result.message);
     return result;
   } catch (err) {
     console.error(err.message);
   }
 };
 
-export const getHighScoreHandler = async (userId, payload) => {
-  const highScoreRecord = getHighScore(userId);
-  let highScore = 0;
-  if (highScoreRecord) {
-    highScore = highScoreRecord.highestScore;
-  }
-  // console.log(`highScore: ${highScore}`);
+export const getHighScore = async (userId, payload) => {
+  // 유저의 최고 점수 가져오기
+  const highScore = await redis.zscore('highscores', userId);
 
-  let result = { status: 'success', message: highScore };
+  // highScore 형변환. null일 경우 0으로 설정
+  const numberHighScore = highScore ? Number(highScore) : 0;
 
+  let result = { status: 'success', message: numberHighScore };
   return result;
 };
 
 export const removeScore = async (userId) => {
-  if (scores.hasOwnProperty(userId)) {
-    // userId가 scores에 존재하는지 확인
-    try {
-      const removedScore = scores[userId]; // 삭제 전에 데이터 백업
-      delete scores[userId]; // scores 객체에서 해당 userId 삭제
-      return removedScore; // 삭제된 데이터를 반환
-    } catch (err) {
-      console.error(err.name); // 에러 로그 출력
-      throw new Error('Score 삭제 중 오류 발생');
-    }
-  } else {
-    console.error('해당 userId를 찾을 수 없음');
-    return null; // 해당 userId가 없을 경우 null 반환
+  try {
+    await redis.del(`scores:${userId}`); // 스코어 삭제
+  } catch (err) {
+    console.error(err.message);
   }
 };
