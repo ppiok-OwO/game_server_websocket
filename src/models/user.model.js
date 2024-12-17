@@ -1,49 +1,45 @@
-import { Prisma } from '@prisma/client';
-import { prisma } from '../utils/prisma/index.js';
+import Redis from 'ioredis';
+const redis = new Redis(); // Redis 인스턴스 생성
 
 // 유저 관련 CRUD 함수
 const users = []; // 접속 중인 유저의 배열
 
-export const checkUser = async (user) => {
-  try {
-    const isExistUser = await prisma.users.findFirst({
-      where: {
-        uuid: user.userId,
-      },
-    });
-
-    return isExistUser;
-  } catch (err) {
-    console.error(err.name);
-  }
-};
-
 export const addUser = async (user) => {
-  users.push(user);
-  // try {
-  //   await prisma.users.create({
-  //     data: {
-  //       uuid: user.uuid,
-  //       socketId: user.socketId,
-  //     },
-  //   });
-  // } catch (err) {
-  //   console.error(err.name);
-  // }
+  try {
+    users.push(user);
+    await redis.hmset(`user:${user.uuid}`, {
+      uuid: user.uuid,
+      socketId: user.socketId,
+      createdAt: Date.now(),
+    });
+    console.log(`User added to Redis: ${user.uuid}`);
+  } catch (err) {
+    console.error(err.message);
+  }
 };
 
 export const removeUser = async (socketId) => {
   const index = users.findIndex((user) => user.socketId === socketId);
   if (index !== -1) {
+    const removedUser = users.splice(index, 1)[0];
     try {
+      await redis.del(`user:${removedUser.uuid}`);
+      console.log(`User removed from Redis: ${removedUser.uuid}`);
+      return removedUser;
     } catch (err) {
-      console.error(err.name);
+      console.error(err.message);
     }
-
-    return users.splice(index, 1)[0];
   }
 };
 
-export const getUsers = () => {
-  return users;
+// 접속 중인 유저를 가져오는 함수
+export const getUsers = async () => {
+  try {
+    const keys = await redis.keys('user:*');
+    const users = await Promise.all(keys.map((key) => redis.hgetall(key)));
+    return users;
+  } catch (err) {
+    console.error('Error fetching users:', err);
+    return [];
+  }
 };

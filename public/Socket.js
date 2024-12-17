@@ -19,7 +19,7 @@ socket.on('connection', (data) => {
     localStorage.setItem('userUUID', userId);
   }
   if (userId) {
-    socket.emit('connection', { uuid: userId });
+    socket.emit('register', { uuid: userId });
   }
 
   console.log('connection: ', userId);

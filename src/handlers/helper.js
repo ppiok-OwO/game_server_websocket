@@ -9,9 +9,10 @@ import { removeScore } from './score.handler.js';
 // 핸들러 내부 로직에 사용될 함수들
 
 // 접속할 경우에 사용할 함수
-export const handleConnection = (socket, uuid) => {
+export const handleConnection = async (socket, uuid) => {
+  const currentUser = await getUsers();
   console.log(`New user connected: ${uuid} with socket ID ${socket.id}`);
-  console.log('Current users: ', getUsers());
+  console.log('Current users: ', currentUser);
 
   createStage(uuid);
 

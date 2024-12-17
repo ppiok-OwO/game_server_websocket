@@ -1,5 +1,4 @@
 import { getGameAssets } from '../init/asset.js';
-import { getStage, setStage } from '../models/stage.model.js';
 import Redis from 'ioredis';
 
 const redis = new Redis(); // Redis 인스턴스 생성
