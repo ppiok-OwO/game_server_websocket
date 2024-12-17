@@ -10,6 +10,7 @@ class Score {
   // HIGH_SCORE_KEY = 'highScore';
   highScore = 0;
   stageId = null;
+  isNewScore = false;
 
   constructor(ctx, scaleRatio) {
     this.ctx = ctx;
@@ -70,6 +71,7 @@ class Score {
 
       if (this.score > this.highScore) {
         this.highScore = this.score;
+        this.isNewScore = true;
       }
     } catch (err) {
       console.error(err.message);
@@ -87,9 +89,11 @@ class Score {
   }
 
   getHighScore = async () => {
-    const highScoreResponse = await sendEvent(7, {});
+    const highScoreResponse = await sendEvent(7, {
+      isNewScore: this.isNewScore,
+    });
     const serverHighScore = highScoreResponse.message;
-    // console.log(`highScore: ${serverHighScore}`);
+    // console.log(`message: ${serverHighScore}`);
 
     this.highScore = serverHighScore;
     // return serverHighScore;

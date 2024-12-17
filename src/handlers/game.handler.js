@@ -22,7 +22,7 @@ export const gameOver = async (uuid, payload) => {
   if (!currentScores || currentScores.length === 0) {
     recentScore = 0;
   }
-  recentScore = currentScores[0]?.score;
+  recentScore = currentScores[0]?.score || 0;
   console.log(`recentScore: ${recentScore}`);
 
   removeScore(uuid);

@@ -73,6 +73,8 @@ export const sendEvent = (handlerId, payload) => {
 socket.on('response', (response) => {
   const { handlerId } = response;
 
+  if (response.broadcast) return;
+
   // handlerId에 해당하는 리스너 실행
   if (responseListeners[handlerId]) {
     responseListeners[handlerId](response);

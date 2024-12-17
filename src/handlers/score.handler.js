@@ -107,11 +107,22 @@ export const obtainScore = async (userId, payload) => {
 };
 
 export const getHighScore = async (userId, payload) => {
+  const { isNewScore } = payload;
   // 유저의 최고 점수 가져오기
   const highScore = await redis.zscore('highscores', userId);
 
   // highScore 형변환. null일 경우 0으로 설정
   const numberHighScore = highScore ? Number(highScore) : 0;
+
+  if (isNewScore) {
+    let result = {
+      broadcast: true,
+      status: 'success',
+      message: `Player ${userId} set a new high score!: ${numberHighScore}`,
+    };
+
+    return result;
+  }
 
   let result = { status: 'success', message: numberHighScore };
   return result;
