@@ -15,7 +15,7 @@ export const setScore = async (userId, score) => {
   await redis.lpush(`scores:${userId}`, scoreData); // 점수 추가
 
   // 점수 리스트의 길이 제한 (최신 10개만 유지)
-  await redis.ltrim(`scores:${userId}`, 0, 19); // 상위 20개 점수 유지
+  await redis.ltrim(`scores:${userId}`, 0, 19);
 };
 
 export const getScore = async (userId, count = 10) => {

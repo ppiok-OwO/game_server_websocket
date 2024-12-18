@@ -1,13 +1,80 @@
+body {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  height: 100vh;
+  background-color: rgb(248, 248, 242);
+
+  user-select: none;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  outline: none;
+  -webkit-tap-highlight-color: rgba(255, 255, 255, 0);
+}
+canvas {
+  margin-top: 100px;
+  border: 2px solid grey;
+}
+
 * {
   margin: 0;
   padding: 0;
   font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 }
-body {
-  height: 100vh;
+
+/* 헤더 스타일 설정 */
+#header {
+  position: fixed; /* 화면에 고정 */
+  top: 0; /* 상단에서 0px 위치 */
+  left: 0; /* 좌측에서 0px 위치 */
+  width: 100%; /* 가로 전체 너비 */
+  height: auto; /* 비율에 맞춰 높이 자동 조정 */
+  display: block; /* 블록 요소로 설정 */
+  margin: 0; /* 여백 제거 */
+  padding: 0; /* 패딩 제거 */
+  z-index: 1000; /* 다른 요소 위에 표시되도록 설정 */
+  background-color: white; /* 배경 색상 (필요에 따라 설정) */
+}
+
+#main {
   display: flex;
-  flex-direction: column;
-  background-color: rgb(248, 248, 242);
+  flex-wrap: wrap;
+  flex-direction: row;
+  align-content: center;
+  align-items: center;
+}
+
+#inventory-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+}
+
+#inventory {
+  margin-left: 10px;
+  margin-top: 115px; /* 헤더 높이만큼 여백 추가 */
+  position: relative; /* 헤더와 겹치지 않도록 조정 */
+  z-index: 1; /* 헤더 위에 표시되지 않게 설정 */
+}
+
+/* 부모 요소에 Flexbox 적용 */
+#gameNbtn-container {
+  display: flex; /* Flexbox 설정 */
+  flex-direction: row;
+  justify-content: center; /* 수평 가운데 정렬 */
+  align-items: center; /* 수직 가운데 정렬 */
+  height: calc(100vh - 115px); /* 전체 높이에서 헤더의 높이를 뺀 값 */
+  margin: 0 auto; /* 수평 가운데 정렬 */
+}
+
+/* gameNbtn 영역 설정 */
+#gameNbtn {
+  display: block;
+  text-align: center; /* 내부 요소(버튼 등)를 가운데 정렬 */
 }
 
 header {
@@ -280,12 +347,8 @@ section {
 }
 
 .musicBtn {
-  flex: auto;
+  display: flex;
   flex-direction: row;
-}
-
-#inventory {
-  background-color: orange;
 }
 
 @keyframes animateLogo {
