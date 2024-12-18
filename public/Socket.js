@@ -15,7 +15,7 @@ let userId = localStorage.getItem('userUUID') || null;
 
 socket.on('connection', (data) => {
   if (!userId) {
-    userId = data.uuid;
+    userId = data.userUUID;
     localStorage.setItem('userUUID', userId);
   }
   if (userId) {

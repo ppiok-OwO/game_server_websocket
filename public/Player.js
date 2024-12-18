@@ -37,15 +37,15 @@ class Player {
     this.yStandingPosition = this.y;
 
     this.standingStillImage = new Image();
-    this.standingStillImage.src = 'images/characters/ninjafrog.png';
+    this.standingStillImage.src = 'images/characters/runninggirl(2).png';
     this.image = this.standingStillImage;
 
     // 달리기
     const ninjaFrogImage1 = new Image();
-    ninjaFrogImage1.src = 'images/characters/ninjafrog.png';
+    ninjaFrogImage1.src = 'images/characters/runninggirl(1).png';
 
     const ninjaFrogImage2 = new Image();
-    ninjaFrogImage2.src = 'images/characters/ninjafrogjump.png';
+    ninjaFrogImage2.src = 'images/characters/runninggirl(2).png';
 
     this.ninjaFrogImages.push(ninjaFrogImage1);
     this.ninjaFrogImages.push(ninjaFrogImage2);
@@ -151,6 +151,13 @@ class Player {
 
   draw() {
     this.ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+  }
+
+  reset() {
+    this.hp = this.totalHp;
+    isInvincible = false;
+    evasion = false;
+    mitigation = false;
   }
 }
 

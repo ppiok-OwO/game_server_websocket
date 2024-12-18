@@ -31,6 +31,7 @@ class IngredientController {
   createIngredient(score) {
     const currentStageId = score.stageId || 1000;
     const ingredientIndex = currentStageId - 1000; // 인덱스
+    if (ingredientIndex > 5) ingredientIndex = 5;
     const index = this.getRandomNumber(0, ingredientIndex);
     const ingredientInfo = this.ingredientImages[index];
     const x = this.canvas.width * 1.5;

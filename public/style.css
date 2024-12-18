@@ -279,6 +279,11 @@ section {
   border-top-left-radius: 10px;
 }
 
+.musicBtn {
+  flex: auto;
+  flex-direction: row;
+}
+
 #inventory {
   background-color: orange;
 }

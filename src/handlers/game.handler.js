@@ -42,5 +42,9 @@ export const gameEnd = async (uuid, payload) => {
   }
 
   // 검증이 통과되면 게임 종료 처리
-  return { status: 'success', message: 'Game ended successfully', recentScore };
+  return {
+    status: 'success',
+    message: 'Game ended successfully!',
+    recentScore,
+  };
 };

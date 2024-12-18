@@ -21,18 +21,18 @@ const GAME_SPEED_START = 1;
 const GAME_SPEED_INCREMENT = 0.00001;
 
 // 게임 크기
-const GAME_WIDTH = 800;
+const GAME_WIDTH = 1200;
 const GAME_HEIGHT = 500;
 
 // 플레이어
 // 800 * 200 사이즈의 캔버스에서는 이미지의 기본크기가 크기때문에 1.5로 나눈 값을 사용. (비율 유지)
-const PLAYER_WIDTH = 100 / 1.5; // 58
-const PLAYER_HEIGHT = 100 / 1.5; // 62
+const PLAYER_WIDTH = 100; // 58
+const PLAYER_HEIGHT = 150; // 62
 const MAX_JUMP_HEIGHT = GAME_HEIGHT;
-const MIN_JUMP_HEIGHT = 200;
+const MIN_JUMP_HEIGHT = 400;
 
 // 땅
-const GROUND_WIDTH = 800;
+const GROUND_WIDTH = 1200;
 const GROUND_HEIGHT = 500;
 const GROUND_SPEED = 0.5;
 
@@ -44,8 +44,8 @@ const OBSTACLE_CONFIG = [
     image: 'images/obstacle/fitnesstrainer2.png',
   },
   {
-    width: 150 / 1.5,
-    height: 150 / 1.5,
+    width: 100 / 1.5,
+    height: 100 / 1.5,
     id: 2,
     image: 'images/obstacle/stop.png',
   },
@@ -81,38 +81,38 @@ const ITEM_CONFIG = [
 
 const INGREDIENT_CONFIG = [
   {
-    width: 65,
-    height: 65,
+    width: 80,
+    height: 80,
     id: 1,
     image: 'images/ingredients/tteok.png',
   },
   {
-    width: 65,
-    height: 65,
+    width: 80,
+    height: 80,
     id: 2,
     image: 'images/ingredients/gochujang.png',
   },
   {
-    width: 65,
-    height: 65,
+    width: 80,
+    height: 80,
     id: 3,
     image: 'images/ingredients/ramyeon.png',
   },
   {
-    width: 65,
-    height: 65,
+    width: 80,
+    height: 80,
     id: 4,
     image: 'images/ingredients/cheese.png',
   },
   {
-    width: 65,
-    height: 65,
+    width: 80,
+    height: 80,
     id: 5,
     image: 'images/ingredients/sundae.png',
   },
   {
-    width: 65,
-    height: 65,
+    width: 80,
+    height: 80,
     id: 6,
     image: 'images/ingredients/friedrice.png',
   },
@@ -130,6 +130,7 @@ let scaleRatio = null;
 let previousTime = null;
 let gameSpeed = GAME_SPEED_START;
 let gameover = false;
+let gameClear = false;
 let hasAddedEventListenersForRestart = false;
 let waitingToStart = true;
 let uuid = null;
@@ -256,16 +257,25 @@ if (screen.orientation) {
 function showGameOver() {
   const fontSize = 70 * scaleRatio;
   ctx.font = `${fontSize}px Verdana`;
-  ctx.fillStyle = 'grey';
+  ctx.fillStyle = 'black';
   const x = canvas.width / 4.5;
   const y = canvas.height / 2;
   ctx.fillText('GAME OVER', x, y);
 }
 
+function showGameClear() {
+  const fontSize = 70 * scaleRatio;
+  ctx.font = `${fontSize}px Verdana`;
+  ctx.fillStyle = 'red';
+  const x = canvas.width / 4.5;
+  const y = canvas.height / 2;
+  ctx.fillText('GAME CLEAR!', x, y);
+}
+
 function showStartGameText() {
   const fontSize = 40 * scaleRatio;
   ctx.font = `${fontSize}px Verdana`;
-  ctx.fillStyle = 'grey';
+  ctx.fillStyle = 'white';
   const x = canvas.width / 14;
   const y = canvas.height / 2;
   ctx.fillText('Press the Game Start Button', x, y);
@@ -355,7 +365,7 @@ async function gameLoop(currentTime) {
   if (collideWithIngredient && collideWithIngredient.ingredientId) {
     score.getIngredient(collideWithIngredient.ingredientId);
     player.setIngredient(collideWithIngredient.ingredientId);
-    console.log('인벤토리: ',player.ingredients);
+    console.log('인벤토리: ', player.ingredients);
   }
 
   // draw
@@ -365,6 +375,18 @@ async function gameLoop(currentTime) {
   itemController.draw();
   ingredientController.draw();
   score.draw();
+
+  if (score.stageId > 1006) {
+    gameClear = true;
+    let gameClearResponse = await sendEvent(3, {});
+    score.getHighScore();
+    setupGameReset();
+    console.log(gameClearResponse.message, gameClearResponse.recentScore);
+  }
+
+  if (gameClear) {
+    showGameClear();
+  }
 
   if (gameover) {
     showGameOver();
@@ -377,6 +399,44 @@ async function gameLoop(currentTime) {
   // 재귀 호출 (무한반복)
   requestAnimationFrame(gameLoop);
 }
+
+// 배경음악
+const audio = new Audio('./musics/doki-doki-crafting-club-194811.mp3');
+document.getElementById('playButton').addEventListener('click', () => {
+  audio.play();
+});
+
+document.getElementById('pauseButton').addEventListener('click', () => {
+  audio.pause();
+});
+
+document.getElementById('stopButton').addEventListener('click', () => {
+  audio.pause();
+  audio.currentTime = 0; // 정지 후 재생 위치 초기화
+});
+audio.loop = true; // 무한 반복
+
+// 화면에 맞는 캔버스
+// function resizeCanvasWithAspectRatio() {
+//   const aspectRatio = 16 / 4; // 16:9 비율
+//   const width = window.innerWidth;
+//   const height = window.innerHeight;
+
+//   if (width / height > aspectRatio) {
+//     canvas.height = height;
+//     canvas.width = height * aspectRatio;
+//   } else {
+//     canvas.width = width;
+//     canvas.height = width / aspectRatio;
+//   }
+
+//   ctx.fillStyle = 'lightblue';
+//   ctx.fillRect(0, 0, canvas.width, canvas.height);
+// }
+
+// // 초기 크기 설정 및 화면 크기 변경 시 리사이즈
+// resizeCanvasWithAspectRatio();
+// window.addEventListener('resize', resizeCanvasWithAspectRatio);
 
 // 게임 프레임을 다시 그리는 메서드
 requestAnimationFrame(gameLoop);
