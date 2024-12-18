@@ -6,43 +6,31 @@ import { getStage, setStage } from '../models/stage.model.js';
 
 export const getStageId = async (userId, payload) => {
   // 유저의 현재 스테이지 정보
-  let currentStages = getStage(userId);
-  if (!currentStages.length) {
+  const currentStages = await getStage(userId, 1);
+  if (!currentStages) {
     console.log('No stages found for user');
     return { status: 'fail', message: 'No stages found for user' };
   }
 
-  // 오름차순 -> 가장 큰 스테이지 ID를 확인 <- 유저의 현재 스테이지
-  currentStages.sort((a, b) => b.id - a.id); // 문제 후보(3) 빈 배열 가능성
-  let currentStageId = currentStages[0].id; // 문제 후보(2) null이 담길 가능성
-  // currentStageId = currentStageId.toString(); // 자료형 캐스팅 문제? 문제 후보(1)
-
-  // return JSON.stringify({
-  //   status: 'success',
-  //   message: 1000,
-  // }); // 해보기
+  const currentStageId = currentStages[0].id;
 
   let result = { status: 'success', message: currentStageId };
   return result;
 };
 
 export const moveStageHandler = async (userId, payload) => {
-  // 유저의 현재 스테이지 정보
-  let currentStages = getStage(userId);
-  if (!currentStages.length) {
+  // 가장 최근 스테이지를 확인
+  const currentStage = await getStage(userId, 1);
+  if (!currentStage) {
     console.log('No stages found for user');
     return { status: 'fail', message: 'No stages found for user' };
   }
 
   console.log(`Client Stages: `, payload.currentStage);
-  console.log(`Sever Stage: `, currentStages);
-
-  // 오름차순 -> 가장 큰 스테이지 ID를 확인 <- 유저의 현재 스테이지
-  currentStages.sort((a, b) => b.id - a.id);
-  const currentStage = currentStages[0];
+  console.log(`Sever Stage: `, currentStage);
 
   // 클라이언트 vs 서버 비교
-  if (currentStage.id !== payload.currentStage) {
+  if (currentStage[0].id !== payload.currentStage) {
     console.log('Server currentStage:', currentStage.id);
     console.log('Client currentStage:', payload.currentStage);
     return { status: 'fail', message: 'Current stage mismatch' };

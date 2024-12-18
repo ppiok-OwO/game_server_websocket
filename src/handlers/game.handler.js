@@ -2,16 +2,16 @@ import { getGameAssets } from '../init/asset.js';
 import { setStage, getStage, clearStage } from '../models/stage.model.js';
 import { getScore, removeScore } from './score.handler.js';
 
-export const gameStart = (uuid, payload) => {
+export const gameStart = async (uuid, payload) => {
   const { stages } = getGameAssets();
 
   // 게임을 새로 시작할 때 세션 배열 초기화
   clearStage(uuid);
-  console.log(`After clearStage: `, getStage(uuid));
+  // console.log(`After clearStage: `, getStage(uuid, 1));
 
   // stages 배열에서 0번째 = 첫 번째 스테이지
-  setStage(uuid, stages.data[0].id, payload.timestamp);
-  console.log(`Stage: `, getStage(uuid));
+  await setStage(uuid, stages.data[0].id, payload.timestamp);
+  // console.log(`Stage: `, getStage(uuid, 1));
 
   return { status: 'success' };
 };

@@ -1,8 +1,8 @@
 import Redis from 'ioredis';
 const redis = new Redis(); // Redis 인스턴스 생성
 
-// 유저 관련 CRUD 함수
-const users = []; // 접속 중인 유저의 배열
+// 접속 중인 유저의 배열
+const users = [];
 
 export const addUser = async (user) => {
   try {
