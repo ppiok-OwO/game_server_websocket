@@ -22,14 +22,14 @@ const GAME_SPEED_INCREMENT = 0.00001;
 
 // 게임 크기
 const GAME_WIDTH = 800;
-const GAME_HEIGHT = 200;
+const GAME_HEIGHT = 400;
 
 // 플레이어
 // 800 * 200 사이즈의 캔버스에서는 이미지의 기본크기가 크기때문에 1.5로 나눈 값을 사용. (비율 유지)
 const PLAYER_WIDTH = 88 / 1.5; // 58
 const PLAYER_HEIGHT = 94 / 1.5; // 62
 const MAX_JUMP_HEIGHT = GAME_HEIGHT;
-const MIN_JUMP_HEIGHT = 150;
+const MIN_JUMP_HEIGHT = 250;
 
 // 땅
 const GROUND_WIDTH = 2400;

@@ -7,9 +7,10 @@ class Player {
   jumpPressed = false;
   jumpInProgress = false;
   falling = false;
+  jumpCount = 0; // 점프 횟수 추가
 
-  JUMP_SPEED = 0.6;
-  GRAVITY = 0.4;
+  JUMP_SPEED = 1;
+  GRAVITY = 0.5;
 
   // 생성자
   constructor(ctx, width, height, minJumpHeight, maxJumpHeight, scaleRatio) {
@@ -50,8 +51,10 @@ class Player {
   }
 
   keydown = (event) => {
-    if (event.code === 'Space') {
+    if (event.code === 'Space' && this.jumpCount < 2) {
       this.jumpPressed = true;
+      this.jumpCount++; // 점프 횟수 증가
+      this.falling = false;
     }
   };
 
@@ -76,30 +79,28 @@ class Player {
       this.jumpInProgress = true;
     }
 
-    // 점프가 진행중이고 떨어지는중이 아닐때
+    // 상승 조건: 점프 중이고, 최대 높이에 도달하지 않았을 때
     if (this.jumpInProgress && !this.falling) {
-      // 현재 인스턴스의 위치가 점프의 최소, 최대값의 사이일때
       if (
         this.y > this.canvas.height - this.minJumpHeight ||
         (this.y > this.canvas.height - this.maxJumpHeight && this.jumpPressed)
       ) {
-        // 아무튼 위의 내용은 버튼을 눌렀을때 올라가는 조건
         this.y -= this.JUMP_SPEED * deltaTime * this.scaleRatio;
       } else {
-        this.falling = true;
+        this.falling = true; // 최대 높이에 도달하면 낙하 시작
       }
-      // 떨어질 때
-    } else {
+    }
+
+    // 낙하 조건: 플레이어가 서 있는 위치보다 위에 있을 때
+    if (this.falling) {
       if (this.y < this.yStandingPosition) {
         this.y += this.GRAVITY * deltaTime * this.scaleRatio;
-
-        // 혹시 위치가 어긋 났을때 원래 위치로
-        if (this.y + this.height > this.canvas.height) {
-          this.y = this.yStandingPosition;
-        }
       } else {
+        // 착지 시 상태 초기화
+        this.y = this.yStandingPosition;
         this.falling = false;
         this.jumpInProgress = false;
+        this.jumpCount = 0; // 착지 시 점프 횟수 초기화
       }
     }
   }
