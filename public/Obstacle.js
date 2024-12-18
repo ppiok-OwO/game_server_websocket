@@ -1,6 +1,10 @@
 class Obstacle {
-  constructor(ctx, x, y, width, height, image) {
+  // 피격 상태
+  canDamage = true;
+
+  constructor(ctx, id, x, y, width, height, image) {
     this.ctx = ctx;
+    this.id = id;
     this.x = x;
     this.y = y;
     this.width = width;
@@ -18,7 +22,6 @@ class Obstacle {
 
   collideWith(sprite) {
     const adjustBy = 1.4;
-
     // 충돌
     return (
       this.x < sprite.x + sprite.width / adjustBy &&

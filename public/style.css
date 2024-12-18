@@ -279,6 +279,10 @@ section {
   border-top-left-radius: 10px;
 }
 
+#inventory {
+  background-color: orange;
+}
+
 @keyframes animateLogo {
   0% {
     border-color: black;

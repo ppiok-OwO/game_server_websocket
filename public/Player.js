@@ -8,9 +8,18 @@ class Player {
   jumpInProgress = false;
   falling = false;
   jumpCount = 0; // 점프 횟수 추가
+  JUMP_SPEED = 0.85;
+  GRAVITY = 0.85;
 
-  JUMP_SPEED = 1;
-  GRAVITY = 0.5;
+  // 스탯
+  totalHp = 100;
+  hp = this.totalHp;
+  isInvincible = false;
+  evasion = false;
+  mitigation = false;
+
+  // 모은 재료
+  ingredients = [];
 
   // 생성자
   constructor(ctx, width, height, minJumpHeight, maxJumpHeight, scaleRatio) {
@@ -117,6 +126,28 @@ class Player {
 
     this.walkAnimationTimer -= deltaTime * gameSpeed;
   }
+
+  getRandomNumber(min, max) {
+    return Math.floor(Math.random() * (max - min + 1) + min);
+  }
+
+  setIngredient(ingredientId) {
+    this.ingredients.push(ingredientId);
+  }
+
+  getDamaged = async (obstacle) => {
+    if (obstacle.obstacleId === 1) {
+      const index = this.getRandomNumber(0, this.ingredients.length - 1);
+      this.ingredients.splice(index, 1);
+      this.hp -= 10;
+    } else {
+      this.hp -= 10;
+    }
+    if (this.hp <= 0) {
+      this.hp = 0;
+    }
+    return this.hp;
+  };
 
   draw() {
     this.ctx.drawImage(this.image, this.x, this.y, this.width, this.height);

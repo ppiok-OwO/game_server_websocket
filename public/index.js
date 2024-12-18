@@ -22,28 +22,33 @@ const GAME_SPEED_INCREMENT = 0.00001;
 
 // 게임 크기
 const GAME_WIDTH = 800;
-const GAME_HEIGHT = 400;
+const GAME_HEIGHT = 500;
 
 // 플레이어
 // 800 * 200 사이즈의 캔버스에서는 이미지의 기본크기가 크기때문에 1.5로 나눈 값을 사용. (비율 유지)
-const PLAYER_WIDTH = 88 / 1.5; // 58
-const PLAYER_HEIGHT = 94 / 1.5; // 62
+const PLAYER_WIDTH = 100 / 1.5; // 58
+const PLAYER_HEIGHT = 100 / 1.5; // 62
 const MAX_JUMP_HEIGHT = GAME_HEIGHT;
-const MIN_JUMP_HEIGHT = 250;
+const MIN_JUMP_HEIGHT = 200;
 
 // 땅
-const GROUND_WIDTH = 2400;
-const GROUND_HEIGHT = 24;
+const GROUND_WIDTH = 800;
+const GROUND_HEIGHT = 500;
 const GROUND_SPEED = 0.5;
 
-// 선인장
 const OBSTACLE_CONFIG = [
   {
-    width: 100 / 1.5,
-    height: 100 / 1.5,
-    image: 'images/obstacle/fitnesstrainer.png',
+    width: 250 / 1.5,
+    height: 250 / 1.5,
+    id: 1,
+    image: 'images/obstacle/fitnesstrainer2.png',
   },
-  { width: 98 / 1.5, height: 100 / 1.5, image: 'images/obstacle/stop.png' },
+  {
+    width: 150 / 1.5,
+    height: 150 / 1.5,
+    id: 2,
+    image: 'images/obstacle/stop.png',
+  },
 ];
 
 // 아이템
@@ -76,38 +81,38 @@ const ITEM_CONFIG = [
 
 const INGREDIENT_CONFIG = [
   {
-    width: 65 / 1.5,
-    height: 65 / 1.5,
+    width: 65,
+    height: 65,
     id: 1,
     image: 'images/ingredients/tteok.png',
   },
   {
-    width: 65 / 1.5,
-    height: 65 / 1.5,
+    width: 65,
+    height: 65,
     id: 2,
     image: 'images/ingredients/gochujang.png',
   },
   {
-    width: 65 / 1.5,
-    height: 65 / 1.5,
+    width: 65,
+    height: 65,
     id: 3,
     image: 'images/ingredients/ramyeon.png',
   },
   {
-    width: 65 / 1.5,
-    height: 65 / 1.5,
+    width: 65,
+    height: 65,
     id: 4,
     image: 'images/ingredients/cheese.png',
   },
   {
-    width: 65 / 1.5,
-    height: 65 / 1.5,
+    width: 65,
+    height: 65,
     id: 5,
     image: 'images/ingredients/sundae.png',
   },
   {
-    width: 65 / 1.5,
-    height: 65 / 1.5,
+    width: 65,
+    height: 65,
     id: 6,
     image: 'images/ingredients/friedrice.png',
   },
@@ -163,6 +168,7 @@ function createSprites() {
     image.src = obstacle.image;
     return {
       image,
+      id: obstacle.id,
       width: obstacle.width * scaleRatio,
       height: obstacle.height * scaleRatio,
     };
@@ -289,7 +295,7 @@ function setupGameReset() {
 
     setTimeout(() => {
       gameStartButton.addEventListener('click', reset, { once: true });
-    }, 1000);
+    }, 500);
   }
 }
 
@@ -326,14 +332,21 @@ async function gameLoop(currentTime) {
     score.update(deltaTime);
   }
 
-  if (!gameover && obstacleCotroller.collideWith(player)) {
-    gameover = true;
-    score.getHighScore();
-    setupGameReset();
-    let gameOverResponse = await sendEvent(6, {});
-    let gameOverMessage = gameOverResponse.message;
-    console.log(gameOverMessage);
+  const collideWithObstacle = obstacleCotroller.collideWith(player);
+
+  if (!gameover && collideWithObstacle) {
+    await player.getDamaged(collideWithObstacle);
+    console.log(`플레이어 체력: ${player.hp}`);
+    if (player.hp <= 0) {
+      gameover = true;
+      score.getHighScore();
+      setupGameReset();
+      let gameOverResponse = await sendEvent(6, {});
+      let gameOverMessage = gameOverResponse.message;
+      console.log(gameOverMessage);
+    }
   }
+
   const collideWithItem = itemController.collideWith(player);
   if (collideWithItem && collideWithItem.itemId) {
     score.getItem(collideWithItem.itemId);
@@ -341,15 +354,17 @@ async function gameLoop(currentTime) {
   const collideWithIngredient = ingredientController.collideWith(player);
   if (collideWithIngredient && collideWithIngredient.ingredientId) {
     score.getIngredient(collideWithIngredient.ingredientId);
+    player.setIngredient(collideWithIngredient.ingredientId);
+    console.log('인벤토리: ',player.ingredients);
   }
 
   // draw
-  player.draw();
+  ground.draw();
   obstacleCotroller.draw();
-  score.draw();
+  player.draw();
   itemController.draw();
   ingredientController.draw();
-  ground.draw();
+  score.draw();
 
   if (gameover) {
     showGameOver();

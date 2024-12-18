@@ -36,6 +36,7 @@ class ObstacleController {
 
     const obstacle = new Obstacle(
       this.ctx,
+      obstacleImage.id,
       x,
       y,
       obstacleImage.width,
@@ -70,7 +71,18 @@ class ObstacleController {
   }
 
   collideWith(sprite) {
-    return this.obstacle.some((obstacle) => obstacle.collideWith(sprite));
+    const collidedObstacle = this.obstacle.find(
+      (obstacle) => obstacle.canDamage && obstacle.collideWith(sprite),
+    );
+
+    if (collidedObstacle) {
+      collidedObstacle.canDamage = false; // 충돌 처리 후 비활성화
+      return {
+        obstacleId: collidedObstacle.id,
+        canDamage: collidedObstacle.canDamage,
+      };
+    }
+    return null; // 충돌이 없으면 null 반환
   }
 
   reset() {
