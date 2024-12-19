@@ -11,7 +11,7 @@ dotenv.config(); // .env 파일 로드
 
 const app = express();
 const server = createServer(app);
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3002;
 
 // Redis 연결 설정
 const redis = new Redis({
