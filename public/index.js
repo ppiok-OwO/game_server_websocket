@@ -1,38 +1,53 @@
 import Player from './Player.js';
 import Ground from './Ground.js';
-import CactiController from './CactiController.js';
+import ObstacleCotroller from './ObstacleController.js';
 import Score from './Score.js';
 import ItemController from './ItemController.js';
-import './Socket.js';
+import { socket } from './Socket.js';
 import { sendEvent } from './Socket.js';
+import IngredientController from './IngredientController.js';
+import { userId } from './Socket.js';
 
+// 게임 캔버스
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
+// 게임 시작 버튼
+const gameStartButton = document.getElementById('gameStart');
+
+// 게임 스피드
 const GAME_SPEED_START = 1;
 const GAME_SPEED_INCREMENT = 0.00001;
 
 // 게임 크기
-const GAME_WIDTH = 800;
-const GAME_HEIGHT = 200;
+const GAME_WIDTH = 1200;
+const GAME_HEIGHT = 500;
 
 // 플레이어
 // 800 * 200 사이즈의 캔버스에서는 이미지의 기본크기가 크기때문에 1.5로 나눈 값을 사용. (비율 유지)
-const PLAYER_WIDTH = 88 / 1.5; // 58
-const PLAYER_HEIGHT = 94 / 1.5; // 62
+const PLAYER_WIDTH = 100; // 58
+const PLAYER_HEIGHT = 150; // 62
 const MAX_JUMP_HEIGHT = GAME_HEIGHT;
-const MIN_JUMP_HEIGHT = 150;
+const MIN_JUMP_HEIGHT = 400;
 
 // 땅
-const GROUND_WIDTH = 2400;
-const GROUND_HEIGHT = 24;
+const GROUND_WIDTH = 1200;
+const GROUND_HEIGHT = 470;
 const GROUND_SPEED = 0.5;
 
-// 선인장
-const CACTI_CONFIG = [
-  { width: 48 / 1.5, height: 100 / 1.5, image: 'images/cactus_1.png' },
-  { width: 98 / 1.5, height: 100 / 1.5, image: 'images/cactus_2.png' },
-  { width: 68 / 1.5, height: 70 / 1.5, image: 'images/cactus_3.png' },
+const OBSTACLE_CONFIG = [
+  {
+    width: 250 / 1.5,
+    height: 250 / 1.5,
+    id: 1,
+    image: 'images/obstacle/fitnesstrainer2.png',
+  },
+  {
+    width: 100 / 1.5,
+    height: 100 / 1.5,
+    id: 2,
+    image: 'images/obstacle/stop.png',
+  },
 ];
 
 // 아이템
@@ -63,10 +78,50 @@ const ITEM_CONFIG = [
   },
 ];
 
+const INGREDIENT_CONFIG = [
+  {
+    width: 80,
+    height: 80,
+    id: 1,
+    image: 'images/ingredients/tteok.png',
+  },
+  {
+    width: 80,
+    height: 80,
+    id: 2,
+    image: 'images/ingredients/gochujang.png',
+  },
+  {
+    width: 80,
+    height: 80,
+    id: 3,
+    image: 'images/ingredients/ramyeon.png',
+  },
+  {
+    width: 80,
+    height: 80,
+    id: 4,
+    image: 'images/ingredients/cheese.png',
+  },
+  {
+    width: 80,
+    height: 80,
+    id: 5,
+    image: 'images/ingredients/sundae.png',
+  },
+  {
+    width: 80,
+    height: 80,
+    id: 6,
+    image: 'images/ingredients/friedrice.png',
+  },
+];
+
 // 게임 요소들
 let player = null;
 let ground = null;
-let cactiController = null;
+let obstacleCotroller = null;
+let ingredientController = null;
 let itemController = null;
 let score = null;
 
@@ -74,8 +129,11 @@ let scaleRatio = null;
 let previousTime = null;
 let gameSpeed = GAME_SPEED_START;
 let gameover = false;
+let gameClear = false;
 let hasAddedEventListenersForRestart = false;
 let waitingToStart = true;
+let getResponse = false;
+let uuid = null;
 
 function createSprites() {
   // 비율에 맞는 크기
@@ -106,22 +164,34 @@ function createSprites() {
     scaleRatio,
   );
 
-  const cactiImages = CACTI_CONFIG.map((cactus) => {
+  const obstacleImages = OBSTACLE_CONFIG.map((obstacle) => {
     const image = new Image();
-    image.src = cactus.image;
+    image.src = obstacle.image;
     return {
       image,
-      width: cactus.width * scaleRatio,
-      height: cactus.height * scaleRatio,
+      id: obstacle.id,
+      width: obstacle.width * scaleRatio,
+      height: obstacle.height * scaleRatio,
     };
   });
 
-  cactiController = new CactiController(
+  obstacleCotroller = new ObstacleCotroller(
     ctx,
-    cactiImages,
+    obstacleImages,
     scaleRatio,
     GROUND_SPEED,
   );
+
+  const ingredientImages = INGREDIENT_CONFIG.map((ingredient) => {
+    const image = new Image();
+    image.src = ingredient.image;
+    return {
+      image,
+      id: ingredient.id,
+      width: ingredient.width * scaleRatio,
+      height: ingredient.height * scaleRatio,
+    };
+  });
 
   const itemImages = ITEM_CONFIG.map((item) => {
     const image = new Image();
@@ -142,6 +212,14 @@ function createSprites() {
   );
 
   score = new Score(ctx, scaleRatio);
+  score.getHighScore();
+
+  ingredientController = new IngredientController(
+    ctx,
+    ingredientImages,
+    scaleRatio,
+    GROUND_SPEED,
+  );
 }
 
 function getScaleRatio() {
@@ -177,21 +255,39 @@ if (screen.orientation) {
 }
 
 function showGameOver() {
-  const fontSize = 70 * scaleRatio;
-  ctx.font = `${fontSize}px Verdana`;
-  ctx.fillStyle = 'grey';
+  // const fontSize = 70 * scaleRatio;
+  // ctx.font = `${fontSize}px Verdana`;
+  // ctx.fillStyle = 'black';
+  // const x = canvas.width / 4.5;
+  // const y = canvas.height / 2;
+  // ctx.fillText('GAME OVER', x, y);
+  const image = new Image();
+  image.src = 'images/ui/youlose.png';
+  ctx.drawImage(image, 250, 5);
+}
+
+function showGameClear() {
+  // const fontSize = 70 * scaleRatio;
+  // ctx.font = `${fontSize}px Verdana`;
+  // ctx.fillStyle = 'yellow';
   const x = canvas.width / 4.5;
   const y = canvas.height / 2;
-  ctx.fillText('GAME OVER', x, y);
+  // ctx.fillText('GAME CLEAR!', x, y);
+  const image = new Image();
+  image.src = 'images/ui/youwin.png';
+  ctx.drawImage(image, 250, 5);
 }
 
 function showStartGameText() {
-  const fontSize = 40 * scaleRatio;
-  ctx.font = `${fontSize}px Verdana`;
-  ctx.fillStyle = 'grey';
+  // const fontSize = 40 * scaleRatio;
+  // ctx.font = `${fontSize}px Verdana`;
+  // ctx.fillStyle = 'yellow';
   const x = canvas.width / 14;
   const y = canvas.height / 2;
-  ctx.fillText('Tap Screen or Press Space To Start', x, y);
+  // ctx.fillText('Press the Game Start Button', x, y);
+  const image = new Image();
+  image.src = 'images/ui/startgame.png';
+  ctx.drawImage(image, 250, 5);
 }
 
 function updateGameSpeed(deltaTime) {
@@ -201,23 +297,28 @@ function updateGameSpeed(deltaTime) {
 function reset() {
   hasAddedEventListenersForRestart = false;
   gameover = false;
+  gameClear = false;
+  getResponse = false;
   waitingToStart = false;
-
   ground.reset();
-  cactiController.reset();
+  obstacleCotroller.reset();
+  ingredientController.reset();
   score.reset();
+  player.reset();
+
   gameSpeed = GAME_SPEED_START;
   // 게임시작 핸들러ID 2, payload 에는 게임 시작 시간
-  sendEvent(2, { timestamp: Date.now() });
+  sendEvent(2, { id: uuid, timestamp: Date.now() });
 }
 
 function setupGameReset() {
   if (!hasAddedEventListenersForRestart) {
     hasAddedEventListenersForRestart = true;
+    gameClear = false;
 
     setTimeout(() => {
-      window.addEventListener('keyup', reset, { once: true });
-    }, 1000);
+      gameStartButton.addEventListener('click', reset, { once: true });
+    }, 500);
   }
 }
 
@@ -226,7 +327,7 @@ function clearScreen() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
-function gameLoop(currentTime) {
+async function gameLoop(currentTime) {
   if (previousTime === null) {
     previousTime = currentTime;
     requestAnimationFrame(gameLoop);
@@ -240,36 +341,71 @@ function gameLoop(currentTime) {
 
   clearScreen();
 
-  if (!gameover && !waitingToStart) {
-    // update
-    // 땅이 움직임
-    ground.update(gameSpeed, deltaTime);
+  if (!gameover && !gameClear && !waitingToStart) {
     // 선인장
-    cactiController.update(gameSpeed, deltaTime);
+    obstacleCotroller.update(gameSpeed, deltaTime);
     itemController.update(gameSpeed, deltaTime);
+    ingredientController.update(gameSpeed, deltaTime, score);
     // 달리기
     player.update(gameSpeed, deltaTime);
     updateGameSpeed(deltaTime);
+    // 땅이 움직임
+    ground.update(gameSpeed, deltaTime);
 
     score.update(deltaTime);
   }
 
-  if (!gameover && cactiController.collideWith(player)) {
-    gameover = true;
-    score.setHighScore();
-    setupGameReset();
+  const collideWithObstacle = obstacleCotroller.collideWith(player);
+
+  if (!gameover && !gameClear && collideWithObstacle) {
+    await player.getDamaged(collideWithObstacle);
+    console.log(`플레이어 체력: ${player.hp}`);
+    if (player.hp <= 0) {
+      gameover = true;
+      score.getHighScore();
+      setupGameReset();
+      let gameOverResponse = await sendEvent(6, {});
+      let gameOverMessage = gameOverResponse.message;
+      console.log(gameOverMessage);
+    }
   }
+
   const collideWithItem = itemController.collideWith(player);
   if (collideWithItem && collideWithItem.itemId) {
     score.getItem(collideWithItem.itemId);
   }
+  const collideWithIngredient = ingredientController.collideWith(player);
+  if (collideWithIngredient && collideWithIngredient.ingredientId) {
+    await score.getIngredient(collideWithIngredient.ingredientId);
+    await player.setIngredient();
+    const inventory = await player.getInventory();
+    updateInventoryUI(inventory);
+  }
 
   // draw
-  player.draw();
-  cactiController.draw();
   ground.draw();
-  score.draw();
+  obstacleCotroller.draw();
+  player.draw();
   itemController.draw();
+  ingredientController.draw();
+  score.draw();
+
+  if (score.stageId > 1006) {
+    gameClear = true;
+  }
+
+  if (gameClear && !getResponse) {
+    showGameClear();
+    try {
+      const gameClearResponse = await sendEvent(3, {});
+      console.log(gameClearResponse.message, gameClearResponse.recentScore);
+      score.getHighScore();
+      setupGameReset();
+      getResponse = true;
+    } catch (error) {
+      console.error('Game clear event failed:', error);
+    }
+  }
 
   if (gameover) {
     showGameOver();
@@ -283,7 +419,96 @@ function gameLoop(currentTime) {
   requestAnimationFrame(gameLoop);
 }
 
+function updateInventoryUI(inventory) {
+  // SVG의 <text> 태그를 가져옴
+  const inventoryText = document.getElementById('inventoryBox');
+  if (!inventoryText) {
+    console.error('SVG <text> element with id "inventoryBox" not found.');
+    return;
+  }
+
+  // 기존 <text> 내용을 초기화
+  while (inventoryText.firstChild) {
+    inventoryText.removeChild(inventoryText.firstChild);
+  }
+
+  // 각 아이템 이름을 <tspan>으로 추가
+  inventory.forEach((itemName, index) => {
+    const tspan = document.createElementNS(
+      'http://www.w3.org/2000/svg',
+      'tspan',
+    );
+    tspan.textContent = itemName;
+
+    // y 좌표를 조정하여 한 줄씩 추가
+    tspan.setAttribute('x', '140'); // x 좌표
+    tspan.setAttribute('dy', index === 0 ? '0' : '1.2em'); // 첫 번째 줄은 위치 고정, 이후 줄은 간격 조정
+
+    inventoryText.appendChild(tspan);
+  });
+}
+
+// 배경음악
+const audio = new Audio('./musics/doki-doki-crafting-club-194811.mp3');
+document.getElementById('playButton').addEventListener('click', () => {
+  audio.play();
+});
+
+document.getElementById('pauseButton').addEventListener('click', () => {
+  audio.pause();
+});
+
+document.getElementById('stopButton').addEventListener('click', () => {
+  audio.pause();
+  audio.currentTime = 0; // 정지 후 재생 위치 초기화
+});
+audio.loop = true; // 무한 반복
+
+socket.on('response', (response) => {
+  if (response.broadcast) {
+    alert(response);
+  }
+});
+
+socket.on('register', (response) => {
+  if (response) {
+    alert(response);
+  }
+});
+
+export function alert(response) {
+  const alertBox = document.getElementById('alertBox');
+  if (!alertBox) {
+    console.error('Alert box element with ID "alertBox" not found.');
+    return;
+  }
+  alertBox.innerHTML = response.message;
+}
+
+// 화면에 맞는 캔버스
+// function resizeCanvasWithAspectRatio() {
+//   const aspectRatio = 16 / 4; // 16:9 비율
+//   const width = window.innerWidth;
+//   const height = window.innerHeight;
+
+//   if (width / height > aspectRatio) {
+//     canvas.height = height;
+//     canvas.width = height * aspectRatio;
+//   } else {
+//     canvas.width = width;
+//     canvas.height = width / aspectRatio;
+//   }
+
+//   ctx.fillStyle = 'lightblue';
+//   ctx.fillRect(0, 0, canvas.width, canvas.height);
+// }
+
+// // 초기 크기 설정 및 화면 크기 변경 시 리사이즈
+// resizeCanvasWithAspectRatio();
+// window.addEventListener('resize', resizeCanvasWithAspectRatio);
+
 // 게임 프레임을 다시 그리는 메서드
 requestAnimationFrame(gameLoop);
 
-window.addEventListener('keyup', reset, { once: true });
+// 게임 시작
+gameStartButton.addEventListener('click', reset, { once: true });
