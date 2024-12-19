@@ -46,6 +46,12 @@ const __dirname = path.resolve(); // 현재 디렉토리 경로
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(
+  express.static('public', {
+    etag: false, // ETag 비활성화
+    maxAge: '0', // 캐시 무효화
+  }),
+);
 
 // 소켓 초기화
 initSocket(server);
