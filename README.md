@@ -224,6 +224,7 @@ createIngredient(score) {
 
 ### 4. 아이템 획득 시 점수 획득
 플레이어의 스프라이트 이미지가 재료 아이템의 스프라이트 이미지와 부딪힐 때, 아래와 같은 메서드가 실행됩니다. 부딪힌 재료 아이템의 Id를 보내면 서버는 그 재료가 가진 점수를 응답해줍니다.
+
 **클라이언트 측 코드:** 
 ```js
 getIngredient = async (ingredientId) => {
@@ -365,6 +366,7 @@ export function alert(response) {
 ```
 ### 2. uuid로 유저 정보 연결
 처음 접속한 유저는 새로 uuid를 발급 받고 로컬 스토리지에 저장하게 됩니다. 추후에 방문했을 때 서버에 해당 uuid를 전송하도록 하였습니다.
+
 **클라이언트 측 코드:**
 ```js
 let userId = localStorage.getItem('userUUID') || null;
