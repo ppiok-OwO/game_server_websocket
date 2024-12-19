@@ -235,6 +235,7 @@ export const moveStageHandler = async (userId, payload) => {
 ```
 
 (2) 기존에 아이템을 생성할 때 image 배열에서 랜덤한 인덱스를 골라 생성하였는데, 저는 그 랜덤한 인덱스를 제한하는 방식으로 구현하였습니다.(혹시 클라이언트가 변조되어서 획득해선 안 되는 아이템을 패킷으로 보낼 때를 대비하여 서버에서 검증 절차 진행합니다.)
+
 **클라이언트 측 코드:** 
 => 클라이언트 측의 ingredientController.js에서 IngredientController 객체는 다음과 같은 생성자 함수를 가지고 있습니다.
 ```js
