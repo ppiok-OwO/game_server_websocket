@@ -35,6 +35,48 @@ game_server_websocket
       ├─ stage.model.js
       └─ user.model.js
 ```
+### 패킷 구조
+
+## 공통 패킷
+
+| 필드 명          | 타입     | 설명                         |
+| ------------- | ------ | -------------------------- |
+| handlerID     | int    | 요청을 처리할 서버 핸들러의 ID         |
+| uuid          | int    | 요청을 보내는 유저의 UUID           |
+| clientVersion | string | 현재 클라이언트 버전 (”1.0.0”) (고정) |
+| payload       | JSON   | 요청 내용                      |
+
+## 스테이지 이동
+
+|필드 명|타입|설명|
+|---|---|---|
+|currentStage|int|현재 스테이지|
+|targetStage|int|이동하는 스테이지|
+
+## 재료 획득
+
+| 필드 명            | 타입  | 설명                 |
+| --------------- | --- | ------------------ |
+| clientIngId     | int | 클라이언트에서 획득한 아이템 ID |
+| clientScore     | int | 클라이언트 기준 스코어       |
+| clientStageId   | int | 클라이언트 기준 스테이지 ID   |
+| clientTimestamp | int | 클라이언트 기준 타임스탬프     |
+
+## 핸들러
+```js
+const handlerMappings = {
+  2: gameStart,
+  3: gameEnd,
+  4: getStageId,
+  5: obtainScore,
+  6: gameOver,
+  7: getHighScore,
+  8: getInventory,
+  11: moveStageHandler,
+};
+```
+
+
 ### 게임의 컨셉
 => 배가 고픈 주인공이 동네 PT쌤을 요리조리 피해 떡볶이 재료를 모아서 맛있게 만들어 먹는 게 이 게임의 목표입니다!</br>
 만약 잡힌다면 스쿼트를 피할 수 없을 것…이 아니라 가진 재료 중의 하나를 랜덤하게 빼앗깁니다! ㅇ0ㅇ) / oh, no!
@@ -442,3 +484,15 @@ const registerHandler = (io) => {
 uuid별로 최고 기록이 따로 기록됩니다!
 ![image](https://github.com/user-attachments/assets/c133a75f-f4f2-42ae-9b8a-8fd11305b002)
 
+---
+
+## 필수 기능 개발 체크리스트
+- [x] 스테이지 구분 방법 정하기, 스테이지 넘어가는 로직 완성하기. ✅ 2024-12-12
+- [x] 스테이지에 따라 다른 아이템 생성하기 ✅ 2024-12-13
+- [x] 재료를 획득하면 점수를 획득하기 ✅ 2024-12-13
+- [x] 재료에 따라 획득하는 점수 검증(재료에 맞는 점수를 획득했는가?), 올바른 스테이지가 맞는지 검증(후반에 해금되는 아이템을 미리 먹을 순 없다) ✅ 2024-12-13
+## 도전 기능 개발 체크리스트
+- [x] Broadcast 기능으로 최고 기록 경신할 때 전체 알림 보내기 ✅ 2024-12-17
+- [x] uuid를 기준으로 가장 높은 점수 관리하기 ✅ 2024-12-16
+- [x] Redis와 연동해서 게임 정보 저장하기 ✅ 2024-12-17
+- [x] 프론트 엔드로 구현하기 ✅ 2024-12-20
