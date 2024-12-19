@@ -22,13 +22,9 @@ const registerHandler = (io) => {
           status: 'success',
           message: `안녕하세요, 플레이어 ${userUUID}님! 또 오셨네요! 플레이어 님의 최고 기록은 ${highScore}점입니다!`,
         });
-      } else {
-        socket.emit('register', {
-          status: 'success',
-          message: `안녕하세요, 플레이어 ${userUUID}님! 새로 오셨네요. 환영합니다!`,
-        });
       }
 
+      // 유저 데이터 생성
       await addUser({ uuid: userUUID, socketId: socket.id });
 
       // 유저의 게임 정보 초기화

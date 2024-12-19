@@ -59,7 +59,8 @@ export const obtainScore = async (userId, payload) => {
   // 현재 스테이지에서 획득할 수 있는 아이템인지 검증
   const { ingredientUnlocks } = getGameAssets();
 
-  // 1스테이지엔 1번 타입 재료들이 언락 되고, 2스테이지엔 2번 타입 재료들이 언락되고...반복하기 때문에 재료의 타입 - 1 = 언락 스테이지
+  // 1스테이지엔 1번 타입 재료들이 언락 되고, 2스테이지엔 2번 타입 재료들이 언락되고...반복하기 때문에
+  // => 언락 스테이지Id = 재료의 타입 - 1
   const serverIngType = ingredients.data[clientIngId - 1].type;
   const ingUnlockStageId = ingredientUnlocks.data[serverIngType - 1].stage_id;
   // 재료를 획득한 스테이지가 재료가 언락되는 스테이지보다 작은 id를 가졌을 때

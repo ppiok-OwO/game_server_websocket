@@ -32,7 +32,7 @@ const MIN_JUMP_HEIGHT = 400;
 
 // 땅
 const GROUND_WIDTH = 1200;
-const GROUND_HEIGHT = 500;
+const GROUND_HEIGHT = 470;
 const GROUND_SPEED = 0.5;
 
 const OBSTACLE_CONFIG = [

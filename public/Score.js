@@ -71,7 +71,6 @@ class Score {
 
       if (this.score > this.highScore) {
         this.highScore = this.score;
-        // this.isNewScore = true;
       }
     } catch (err) {
       console.error(err.message);
