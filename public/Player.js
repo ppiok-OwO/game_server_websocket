@@ -155,9 +155,9 @@ class Player {
 
   reset() {
     this.hp = this.totalHp;
-    isInvincible = false;
-    evasion = false;
-    mitigation = false;
+    this.isInvincible = false;
+    this.evasion = false;
+    this.mitigation = false;
   }
 }
 
