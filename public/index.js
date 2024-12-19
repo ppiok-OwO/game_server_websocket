@@ -1,5 +1,6 @@
 import Player from './Player.js';
 import Ground from './Ground.js';
+import HpBar from './HpBar.js';
 import ObstacleCotroller from './ObstacleController.js';
 import Score from './Score.js';
 import ItemController from './ItemController.js';
@@ -10,7 +11,7 @@ import { userId } from './Socket.js';
 
 // 게임 캔버스
 const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
+export const ctx = canvas.getContext('2d');
 
 // 게임 시작 버튼
 const gameStartButton = document.getElementById('gameStart');
@@ -34,6 +35,8 @@ const MIN_JUMP_HEIGHT = 400;
 const GROUND_WIDTH = 1200;
 const GROUND_HEIGHT = 470;
 const GROUND_SPEED = 0.5;
+
+const HP_BAR_WIDTH_COEFF = 2;
 
 const OBSTACLE_CONFIG = [
   {
@@ -359,6 +362,7 @@ async function gameLoop(currentTime) {
 
   if (!gameover && !gameClear && collideWithObstacle) {
     await player.getDamaged(collideWithObstacle);
+    HpBar.width -= 10 * HP_BAR_WIDTH_COEFF;
     console.log(`플레이어 체력: ${player.hp}`);
     if (player.hp <= 0) {
       gameover = true;
@@ -389,6 +393,7 @@ async function gameLoop(currentTime) {
   itemController.draw();
   ingredientController.draw();
   score.draw();
+  HpBar.draw();
 
   if (score.stageId > 1006) {
     gameClear = true;

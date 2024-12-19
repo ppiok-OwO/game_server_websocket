@@ -22,17 +22,17 @@ const redis = new Redis({
   // password: process.env.REDIS_PASSWORD,
 });
 
-app.use(
-  cors({
-    origin: [
-      'http://lacunasummertales.shop',
-      'http://lacunasummertales.shop:3001',
-      'http://15.164.230.168:3001/',
-    ], // 허용할 도메인
-    methods: ['GET', 'POST'], // 허용할 HTTP 메서드
-    credentials: true, // 쿠키 포함 여부
-  }),
-);
+// app.use(
+//   cors({
+//     origin: [
+//       'http://lacunasummertales.shop',
+//       'http://lacunasummertales.shop:3001',
+//       'http://15.164.230.168:3001/',
+//     ], // 허용할 도메인
+//     methods: ['GET', 'POST'], // 허용할 HTTP 메서드
+//     credentials: true, // 쿠키 포함 여부
+//   }),
+// );
 
 // Redis 연결 상태 확인
 redis.on('connect', () => {
