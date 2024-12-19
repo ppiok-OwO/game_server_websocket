@@ -10,12 +10,24 @@ export const setScore = async (userId, score) => {
 
   // 새로운 점수를 계산하여 추가
   const newScore = recentScore + score;
-  // Redis 리스트에 스코어와 타임스탬프 추가
-  const scoreData = JSON.stringify({ score: newScore, timestamp: Date.now() });
-  await redis.lpush(`scores:${userId}`, scoreData); // 점수 추가
+  // 최고 점수인지 판단하기
+  const isThisHighscore = await setHighScore(userId, newScore);
 
-  // 점수 리스트의 길이 제한 (최신 10개만 유지)
-  await redis.ltrim(`scores:${userId}`, 0, 19);
+  // Redis 리스트에 스코어와 타임스탬프, 최고기록여부 추가
+  const scoreData = JSON.stringify({
+    score: newScore,
+    timestamp: Date.now(),
+    isNewHighScore: isThisHighscore,
+  });
+
+  try {
+    await redis.lpush(`scores:${userId}`, scoreData); // 점수 추가
+  } catch (err) {
+    console.error(err.message);
+  }
+
+  // 점수 리스트의 길이 제한 (최신 20개만 유지)
+  // await redis.ltrim(`scores:${userId}`, 0, 19);
 };
 
 export const getScore = async (userId, count = 10) => {
@@ -83,47 +95,66 @@ export const obtainScore = async (userId, payload) => {
       }
     }
 
-    // 최고 점수를 저장하기 위해 키값 생성
-    const highScoreKey = `highscores`;
+    // 획득한 재료 인벤토리에 저장하기
+    const inventoryData = JSON.stringify({ ingredientId: clientIngId });
+    await redis.lpush(`inventory:${userId}`, inventoryData);
 
     // 최종: 클라이언트와 서버 간의 총 스코어가 동일해졌는지 검증
-    const recentScore = await getScore(userId, 1); // 서버에 저장된 최근 점수 JSON 파싱
-    const serverScore = recentScore[0]?.score || 0;
+    const recentScore = recentScores[0]?.score || 0;
+    const serverScore = recentScore;
     const newClientScore = clientScore + serverIngScore;
 
     if (newClientScore !== serverScore) {
       return { status: 'fail', message: 'Score mismatch' };
     }
 
-    // 최고 기록이라면 기록해두기(zadd의 GT 옵션 사용)
-    await redis.zadd(highScoreKey, 'GT', serverScore, userId);
-
-    let result = { status: 'success', message: serverIngScore };
+    let result = {
+      status: 'success',
+      message: serverIngScore,
+    };
     return result;
   } catch (err) {
     console.error(err.message);
   }
 };
 
-export const getHighScore = async (userId, payload) => {
-  const { isNewScore } = payload;
+export const setHighScore = async (userId, newScore) => {
   // 유저의 최고 점수 가져오기
-  const highScore = await redis.zscore('highscores', userId);
+  const highScore = (await redis.zscore('highscores', userId)) || 0;
+  // 만약 최고 기록이라면 데이터 저장
+  if (newScore > highScore) {
+    // 최고 점수를 저장하기 위해 키값 생성
+    const highScoreKey = `highscores`;
 
-  // highScore 형변환. null일 경우 0으로 설정
-  const numberHighScore = highScore ? Number(highScore) : 0;
+    try {
+      // 기록해두기(더블 체크를 위해 zadd의 GT 옵션 사용)
+      await redis.zadd(highScoreKey, 'GT', newScore, userId);
+    } catch (err) {
+      console.error(err.message);
+    }
 
-  if (isNewScore) {
+    return true;
+  }
+  return false;
+};
+
+export const getHighScore = async (userId, payload) => {
+  // 유저의 최고 점수 가져오기
+  const highScore = (await redis.zscore('highscores', userId)) || 0;
+  // 최근 점수 기록의 isNewHighScore가 true인지 확인
+  const score = await getScore(userId, 1);
+
+  if (score.length > 0 && score[0].isNewHighScore) {
     let result = {
       broadcast: true,
       status: 'success',
-      message: `Player ${userId} set a new high score!: ${numberHighScore}`,
+      message: `Player ${userId} set a new high score!: ${score[0].score}`,
     };
 
     return result;
   }
 
-  let result = { status: 'success', message: numberHighScore };
+  let result = { status: 'success', message: highScore };
   return result;
 };
 

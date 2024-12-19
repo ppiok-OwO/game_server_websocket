@@ -24,9 +24,9 @@ export const createStage = async (userId) => {
   }
 };
 
-export const getStage = async (userId, count) => {
+export const getStage = async (userId, count = 10) => {
   try {
-    const stageDataList = await redis.lrange(`stage:${userId}`, 0, count - 1); // 리스트의 모든 데이터 가져오기
+    const stageDataList = await redis.lrange(`stage:${userId}`, 0, count - 1);
     if (!stageDataList || stageDataList.length === 0) return null;
 
     const parsedStages = stageDataList.map((data) => JSON.parse(data)); // JSON 파싱
@@ -52,7 +52,7 @@ export const setStage = async (userId, id, timestamp) => {
 };
 
 // 스테이지 데이터를 삭제하는 함수
-export const clearStage = async (userId) => {
+export const removeStage = async (userId) => {
   try {
     await redis.del(`stage:${userId}`);
     console.log(`Stage data cleared for user ${userId}`);

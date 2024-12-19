@@ -10,7 +10,7 @@ class Score {
   // HIGH_SCORE_KEY = 'highScore';
   highScore = 0;
   stageId = null;
-  isNewScore = false;
+  // isNewScore = false;
 
   constructor(ctx, scaleRatio) {
     this.ctx = ctx;
@@ -71,7 +71,7 @@ class Score {
 
       if (this.score > this.highScore) {
         this.highScore = this.score;
-        this.isNewScore = true;
+        // this.isNewScore = true;
       }
     } catch (err) {
       console.error(err.message);
@@ -86,13 +86,11 @@ class Score {
     this.score = 0;
     this.time = 0;
     this.lastStageId = null; // 리셋 시 마지막 스테이지 ID 초기화
-    this.isNewScore = false;
+    // this.isNewScore = false;
   }
 
   getHighScore = async () => {
-    const highScoreResponse = await sendEvent(7, {
-      isNewScore: this.isNewScore,
-    });
+    const highScoreResponse = await sendEvent(7, {});
     const serverHighScore = highScoreResponse.message;
     // console.log(`message: ${serverHighScore}`);
 

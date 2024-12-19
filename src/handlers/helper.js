@@ -20,7 +20,6 @@ export const handleConnection = async (socket, uuid) => {
 // 접속 해제할 경우에 사용할 함수
 export const handleDisconnect = async (socket, uuid) => {
   removeUser(socket.id); // 사용자 삭제
-  removeScore(uuid); // 사용자의 스코어 삭제
   const currentUsers = await getUsers();
   console.log(`User disconnected: ${socket.id}`);
   console.log('Current users:', currentUsers);

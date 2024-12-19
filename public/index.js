@@ -133,6 +133,7 @@ let gameover = false;
 let gameClear = false;
 let hasAddedEventListenersForRestart = false;
 let waitingToStart = true;
+let getResponse = false;
 let uuid = null;
 
 function createSprites() {
@@ -255,30 +256,39 @@ if (screen.orientation) {
 }
 
 function showGameOver() {
-  const fontSize = 70 * scaleRatio;
-  ctx.font = `${fontSize}px Verdana`;
-  ctx.fillStyle = 'black';
-  const x = canvas.width / 4.5;
-  const y = canvas.height / 2;
-  ctx.fillText('GAME OVER', x, y);
+  // const fontSize = 70 * scaleRatio;
+  // ctx.font = `${fontSize}px Verdana`;
+  // ctx.fillStyle = 'black';
+  // const x = canvas.width / 4.5;
+  // const y = canvas.height / 2;
+  // ctx.fillText('GAME OVER', x, y);
+  const image = new Image();
+  image.src = 'images/ui/youlose.png';
+  ctx.drawImage(image, 250, 5);
 }
 
 function showGameClear() {
-  const fontSize = 70 * scaleRatio;
-  ctx.font = `${fontSize}px Verdana`;
-  ctx.fillStyle = 'red';
+  // const fontSize = 70 * scaleRatio;
+  // ctx.font = `${fontSize}px Verdana`;
+  // ctx.fillStyle = 'yellow';
   const x = canvas.width / 4.5;
   const y = canvas.height / 2;
-  ctx.fillText('GAME CLEAR!', x, y);
+  // ctx.fillText('GAME CLEAR!', x, y);
+  const image = new Image();
+  image.src = 'images/ui/youwin.png';
+  ctx.drawImage(image, 250, 5);
 }
 
 function showStartGameText() {
-  const fontSize = 40 * scaleRatio;
-  ctx.font = `${fontSize}px Verdana`;
-  ctx.fillStyle = 'white';
+  // const fontSize = 40 * scaleRatio;
+  // ctx.font = `${fontSize}px Verdana`;
+  // ctx.fillStyle = 'yellow';
   const x = canvas.width / 14;
   const y = canvas.height / 2;
-  ctx.fillText('Press the Game Start Button', x, y);
+  // ctx.fillText('Press the Game Start Button', x, y);
+  const image = new Image();
+  image.src = 'images/ui/startgame.png';
+  ctx.drawImage(image, 250, 5);
 }
 
 function updateGameSpeed(deltaTime) {
@@ -288,12 +298,15 @@ function updateGameSpeed(deltaTime) {
 function reset() {
   hasAddedEventListenersForRestart = false;
   gameover = false;
+  gameClear = false;
+  getResponse = false;
   waitingToStart = false;
-
   ground.reset();
   obstacleCotroller.reset();
   ingredientController.reset();
   score.reset();
+  player.reset();
+
   gameSpeed = GAME_SPEED_START;
   // 게임시작 핸들러ID 2, payload 에는 게임 시작 시간
   sendEvent(2, { id: uuid, timestamp: Date.now() });
@@ -302,6 +315,7 @@ function reset() {
 function setupGameReset() {
   if (!hasAddedEventListenersForRestart) {
     hasAddedEventListenersForRestart = true;
+    gameClear = false;
 
     setTimeout(() => {
       gameStartButton.addEventListener('click', reset, { once: true });
@@ -328,7 +342,7 @@ async function gameLoop(currentTime) {
 
   clearScreen();
 
-  if (!gameover && !waitingToStart) {
+  if (!gameover && !gameClear && !waitingToStart) {
     // 선인장
     obstacleCotroller.update(gameSpeed, deltaTime);
     itemController.update(gameSpeed, deltaTime);
@@ -344,7 +358,7 @@ async function gameLoop(currentTime) {
 
   const collideWithObstacle = obstacleCotroller.collideWith(player);
 
-  if (!gameover && collideWithObstacle) {
+  if (!gameover && !gameClear && collideWithObstacle) {
     await player.getDamaged(collideWithObstacle);
     console.log(`플레이어 체력: ${player.hp}`);
     if (player.hp <= 0) {
@@ -378,14 +392,19 @@ async function gameLoop(currentTime) {
 
   if (score.stageId > 1006) {
     gameClear = true;
-    let gameClearResponse = await sendEvent(3, {});
-    score.getHighScore();
-    setupGameReset();
-    console.log(gameClearResponse.message, gameClearResponse.recentScore);
   }
 
-  if (gameClear) {
+  if (gameClear && !getResponse) {
     showGameClear();
+    try {
+      const gameClearResponse = await sendEvent(3, {});
+      console.log(gameClearResponse.message, gameClearResponse.recentScore);
+      score.getHighScore();
+      setupGameReset();
+      getResponse = true;
+    } catch (error) {
+      console.error('Game clear event failed:', error);
+    }
   }
 
   if (gameover) {
