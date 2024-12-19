@@ -43,10 +43,10 @@ export const moveStageHandler = async (userId, payload) => {
 
   // 1스테이지->2스테이지로 넘어가는 과정
   // 임의로 정한 오차범위(0.5)를 넘었을 경우 fail
-  // if (elapsedTime < 8 || elapsedTime > 12) {
-  //   console.log('Server elapsedTime:', elapsedTime);
-  //   return { status: 'fail', message: 'Invalid elapsed time' };
-  // }
+  if (elapsedTime < 8 || elapsedTime > 12) {
+    console.log('Server elapsedTime:', elapsedTime);
+    return { status: 'fail', message: 'Invalid elapsed time' };
+  }
 
   // targetStage에 대한 검증 <- 게임 에셋에 존재하는 스테이지인가?
   const { stages } = getGameAssets();
