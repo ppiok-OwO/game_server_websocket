@@ -1,3 +1,5 @@
+import { sendEvent } from './Socket.js';
+
 class Player {
   WALK_ANIMATION_TIMER = 200;
   walkAnimationTimer = this.WALK_ANIMATION_TIMER;
@@ -134,6 +136,14 @@ class Player {
   setIngredient(ingredientId) {
     this.ingredients.push(ingredientId);
   }
+
+  getInventory = async () => {
+    const inventoryResponse = await sendEvent(8, {});
+    const inventoryMessage = inventoryResponse.message;
+    console.log(inventoryMessage);
+
+    return inventoryMessage;
+  };
 
   getDamaged = async (obstacle) => {
     if (obstacle.obstacleId === 1) {

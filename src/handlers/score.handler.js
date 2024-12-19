@@ -148,7 +148,7 @@ export const getHighScore = async (userId, payload) => {
     let result = {
       broadcast: true,
       status: 'success',
-      message: `Player ${userId} set a new high score!: ${score[0].score}`,
+      message: `플레이어 ${userId}님이 최고 기록 ${score[0].score}점을 달성하셨습니다!`,
     };
 
     return result;

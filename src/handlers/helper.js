@@ -5,6 +5,7 @@ import { getUsers, removeUser } from '../models/user.model.js';
 import handlerMappings from './handlerMapping.js';
 import { createStage } from '../models/stage.model.js';
 import { removeScore } from './score.handler.js';
+import { removeInventory } from './inventory.handler.js';
 
 // 핸들러 내부 로직에 사용될 함수들
 
@@ -19,7 +20,10 @@ export const handleConnection = async (socket, uuid) => {
 
 // 접속 해제할 경우에 사용할 함수
 export const handleDisconnect = async (socket, uuid) => {
-  removeUser(socket.id); // 사용자 삭제
+  // 사용자 기록 모두 삭제(highScore 제외)
+  removeScore(uuid);
+  removeUser(socket.id);
+  removeInventory(uuid);
   const currentUsers = await getUsers();
   console.log(`User disconnected: ${socket.id}`);
   console.log('Current users:', currentUsers);

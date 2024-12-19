@@ -17,18 +17,11 @@ socket.on('connection', (data) => {
   if (!userId) {
     userId = data.userUUID;
     localStorage.setItem('userUUID', userId);
-  }
-  if (userId) {
+  } else {
     socket.emit('register', { uuid: userId });
   }
 
   console.log('connection: ', userId);
-});
-
-socket.on('response', (response) => {
-  if (response.broadcast) {
-    console.log('전체 알림:', response.message);
-  }
 });
 
 const responseListeners = {}; // 핸들러 ID별 리스너 관리 객체

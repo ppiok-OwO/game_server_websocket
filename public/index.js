@@ -3,9 +3,8 @@ import Ground from './Ground.js';
 import ObstacleCotroller from './ObstacleController.js';
 import Score from './Score.js';
 import ItemController from './ItemController.js';
-import './Socket.js';
-import { sendEvent } from './Socket.js';
 import { socket } from './Socket.js';
+import { sendEvent } from './Socket.js';
 import IngredientController from './IngredientController.js';
 import { userId } from './Socket.js';
 
@@ -377,9 +376,10 @@ async function gameLoop(currentTime) {
   }
   const collideWithIngredient = ingredientController.collideWith(player);
   if (collideWithIngredient && collideWithIngredient.ingredientId) {
-    score.getIngredient(collideWithIngredient.ingredientId);
-    player.setIngredient(collideWithIngredient.ingredientId);
-    console.log('인벤토리: ', player.ingredients);
+    await score.getIngredient(collideWithIngredient.ingredientId);
+    await player.setIngredient();
+    const inventory = await player.getInventory();
+    updateInventoryUI(inventory);
   }
 
   // draw
@@ -419,6 +419,35 @@ async function gameLoop(currentTime) {
   requestAnimationFrame(gameLoop);
 }
 
+function updateInventoryUI(inventory) {
+  // SVG의 <text> 태그를 가져옴
+  const inventoryText = document.getElementById('inventoryBox');
+  if (!inventoryText) {
+    console.error('SVG <text> element with id "inventoryBox" not found.');
+    return;
+  }
+
+  // 기존 <text> 내용을 초기화
+  while (inventoryText.firstChild) {
+    inventoryText.removeChild(inventoryText.firstChild);
+  }
+
+  // 각 아이템 이름을 <tspan>으로 추가
+  inventory.forEach((itemName, index) => {
+    const tspan = document.createElementNS(
+      'http://www.w3.org/2000/svg',
+      'tspan',
+    );
+    tspan.textContent = itemName;
+
+    // y 좌표를 조정하여 한 줄씩 추가
+    tspan.setAttribute('x', '140'); // x 좌표
+    tspan.setAttribute('dy', index === 0 ? '0' : '1.2em'); // 첫 번째 줄은 위치 고정, 이후 줄은 간격 조정
+
+    inventoryText.appendChild(tspan);
+  });
+}
+
 // 배경음악
 const audio = new Audio('./musics/doki-doki-crafting-club-194811.mp3');
 document.getElementById('playButton').addEventListener('click', () => {
@@ -434,6 +463,27 @@ document.getElementById('stopButton').addEventListener('click', () => {
   audio.currentTime = 0; // 정지 후 재생 위치 초기화
 });
 audio.loop = true; // 무한 반복
+
+socket.on('response', (response) => {
+  if (response.broadcast) {
+    alert(response);
+  }
+});
+
+socket.on('register', (response) => {
+  if (response) {
+    alert(response);
+  }
+});
+
+export function alert(response) {
+  const alertBox = document.getElementById('alertBox');
+  if (!alertBox) {
+    console.error('Alert box element with ID "alertBox" not found.');
+    return;
+  }
+  alertBox.innerHTML = response.message;
+}
 
 // 화면에 맞는 캔버스
 // function resizeCanvasWithAspectRatio() {
