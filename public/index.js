@@ -37,6 +37,7 @@ const GROUND_HEIGHT = 470;
 const GROUND_SPEED = 0.5;
 
 const HP_BAR_WIDTH_COEFF = 2;
+const maxHp = 100;
 
 const OBSTACLE_CONFIG = [
   {
@@ -318,6 +319,7 @@ function setupGameReset() {
   if (!hasAddedEventListenersForRestart) {
     hasAddedEventListenersForRestart = true;
     gameClear = false;
+    HpBar.width = maxHp * HP_BAR_WIDTH_COEFF;
 
     setTimeout(() => {
       gameStartButton.addEventListener('click', reset, { once: true });
