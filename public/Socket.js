@@ -1,6 +1,6 @@
 import { CLIENT_VERSION } from './Constants.js';
 
-export const socket = io('http://15.164.230.168:3001', {
+export const socket = io('http://54.180.240.133:3001', {
   // export const socket = io('http://localhost:3001', {
   // 서버에 연결할 때 추가 정보를 전달하는 역할
   // 쿼리 문자열로 변환되어 URL에 추가된다(예: http://localhost:3000?clientVersion=1.0.0)
