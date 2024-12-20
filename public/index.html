@@ -63,6 +63,7 @@
           fill="white"
         />
         <path
+          id="ranking"
           d="M1559.57 67.3304C1558.07 62.9681 1526.02 55.0558 1409.81 58.3047C1398.52 71.8839 1388.85 111.247 1393.98 110.912C1398.08 110.644 1488.73 111.684 1533.54 112.237L1559.57 67.3304Z"
           fill="url(#paint4_linear_6_113)"
         />
@@ -267,5 +268,14 @@
         </div>
       </div>
     </div>
+    <script>
+      // "ranking" ID를 가진 요소에 클릭 이벤트 추가
+      const rankingPath = document.getElementById('ranking');
+
+      rankingPath.addEventListener('click', () => {
+        // ranking.html로 이동
+        window.location.href = 'ranking.html';
+      });
+    </script>
   </body>
 </html>

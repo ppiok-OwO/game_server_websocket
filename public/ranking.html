@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ranking</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      table {
+        width: 50%;
+        border-collapse: collapse;
+        margin: 20px auto;
+      }
+      table,
+      th,
+      td {
+        border: 1px solid black;
+      }
+      th,
+      td {
+        padding: 10px;
+        text-align: center;
+      }
+      th {
+        background-color: #f4f4f4;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 style="text-align: center">User Rankings</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Member</th>
+          <th>Score</th>
+        </tr>
+      </thead>
+      <tbody id="ranking-table">
+        <!-- 데이터가 여기에 삽입된다 -->
+      </tbody>
+    </table>
+
+    <script>
+      async function loadRanking() {
+        try {
+          const response = await fetch('/api/ranking');
+          if (!response.ok) {
+            throw new Error('Failed to fetch rankings');
+          }
+
+          const data = await response.json();
+          const rankingTable = document.getElementById('ranking-table');
+          rankingTable.innerHTML = ''; // 기존 데이터 초기화
+
+          data.data.forEach((rank, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${rank.member}</td>
+            <td>${rank.score}</td>
+          `;
+            rankingTable.appendChild(row);
+          });
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      // 페이지 로드 시 랭킹 데이터 가져오기
+      window.onload = loadRanking;
+    </script>
+  </body>
+</html>

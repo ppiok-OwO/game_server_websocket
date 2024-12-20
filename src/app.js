@@ -4,6 +4,7 @@ import initSocket from './init/socket.js';
 import { loadGameAssets } from './init/asset.js';
 import path from 'path';
 import errorHandlingMiddleware from './middlewares/error-handling.middleware.js';
+import RankingRouter from './routes/ranking.router.js';
 import Redis from 'ioredis';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -22,17 +23,17 @@ const redis = new Redis({
   // password: process.env.REDIS_PASSWORD,
 });
 
-app.use(
-  cors({
-    origin: [
-      'http://lacunasummertales.shop',
-      'http://lacunasummertales.shop:3001',
-      'http://3.39.232.183:3001/',
-    ], // 허용할 도메인
-    methods: ['GET', 'POST'], // 허용할 HTTP 메서드
-    credentials: true, // 쿠키 포함 여부
-  }),
-);
+// app.use(
+//   cors({
+//     origin: [
+//       'http://lacunasummertales.shop',
+//       'http://lacunasummertales.shop:3001',
+//       'http://3.39.232.183:3001/',
+//     ], // 허용할 도메인
+//     methods: ['GET', 'POST'], // 허용할 HTTP 메서드
+//     credentials: true, // 쿠키 포함 여부
+//   }),
+// );
 
 // Redis 연결 상태 확인
 redis.on('connect', () => {
@@ -68,6 +69,9 @@ app.use(
 
 // 소켓 초기화
 initSocket(server);
+
+// 랭킹 API 라우터 추가
+app.use('/api', RankingRouter);
 
 // 에러핸들링 미들웨어
 app.use(errorHandlingMiddleware);
